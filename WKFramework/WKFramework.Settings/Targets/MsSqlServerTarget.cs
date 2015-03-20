@@ -11,7 +11,7 @@ using System.IO;
 
 namespace WKFramework.Settings.Targets
 {
-    public class LocalDbTarget<K> : ISettingsTarget<K>
+    public class MsSqlServerTarget<K> : ISettingsTarget<K>
     {
         private readonly string _keyColumn;
         private readonly string _valueColumn;
@@ -20,7 +20,7 @@ namespace WKFramework.Settings.Targets
         private string _connectionString;
         private BinarySerializer _serializer = new BinarySerializer();
 
-        public LocalDbTarget(string connectionString, string tableName, string dbName = null, string keyColumn = "optionName", string valueColumn = "value")
+        public MsSqlServerTarget(string connectionString, string tableName, string dbName = null, string keyColumn = "optionName", string valueColumn = "value")
         {
             _connectionString = connectionString;
             _tableName = tableName;

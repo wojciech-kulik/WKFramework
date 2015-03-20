@@ -41,7 +41,7 @@
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Targets\ISettingsTarget.cs" />
-    <Compile Include="Targets\LocalDbTarget.cs" />
+    <Compile Include="Targets\MsSqlServerTarget.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\WKFramework.Utils\WKFramework.Utils.csproj">

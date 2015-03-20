@@ -6,7 +6,7 @@ using WKFramework.UnitTests.SettingsTests.TestClasses;
 namespace WKFramework.UnitTests.SettingsTests
 {
     [TestClass]
-    public class LocalDbTargetTests
+    public class MsSqlServerTargetTests
     {
         private const string _connectionString = "Server=(localdb)\\v11.0;Integrated Security=true";
         private const string _dbName = "SettingsDB.Test";
@@ -14,7 +14,7 @@ namespace WKFramework.UnitTests.SettingsTests
         [TestMethod]
         public void StringAsKeyTest()
         {
-            var target = new LocalDbTarget<string>(_connectionString, "Settings", _dbName);
+            var target = new MsSqlServerTarget<string>(_connectionString, "Settings", _dbName);
 
             target.WriteValue<string>("option1", "value1");
             target.WriteValue<TestValueEnum>("option2", TestValueEnum.Value2);
@@ -26,7 +26,7 @@ namespace WKFramework.UnitTests.SettingsTests
         [TestMethod]
         public void EnumAsKeyTest()
         {
-            var target = new LocalDbTarget<TestKeyEnum>(_connectionString, "Settings2", _dbName);
+            var target = new MsSqlServerTarget<TestKeyEnum>(_connectionString, "Settings2", _dbName);
 
             target.WriteValue<string>(TestKeyEnum.Key1, "value1");
             target.WriteValue<TestValueEnum>(TestKeyEnum.Key2, TestValueEnum.Value2);

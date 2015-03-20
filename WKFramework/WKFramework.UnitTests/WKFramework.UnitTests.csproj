@@ -50,7 +50,7 @@
     </Otherwise>
   </Choose>
   <ItemGroup>
-    <Compile Include="SettingsTests\LocalDbTargetTests.cs" />
+    <Compile Include="SettingsTests\MsSqlServerTargetTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SettingsTests\TestClasses\TestEnums.cs" />
   </ItemGroup>
