@@ -50,8 +50,9 @@
     </Otherwise>
   </Choose>
   <ItemGroup>
-    <Compile Include="LocalDbTargetTests.cs" />
+    <Compile Include="SettingsTests\LocalDbTargetTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="SettingsTests\TestClasses\TestEnums.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\WKFramework.Settings\WKFramework.Settings.csproj">

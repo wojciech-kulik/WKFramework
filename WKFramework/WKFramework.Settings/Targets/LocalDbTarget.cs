@@ -5,6 +5,9 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Data.SqlClient;
 using WKFramework.Utils;
+using System.Runtime.Serialization;
+using System.Runtime.Serialization.Formatters.Binary;
+using System.IO;
 
 namespace WKFramework.Settings.Targets
 {
@@ -15,8 +18,9 @@ namespace WKFramework.Settings.Targets
         private readonly string _tableName;
         private string _dbName;
         private string _connectionString;
+        private BinarySerializer _serializer = new BinarySerializer();
 
-        public LocalDbTarget(string connectionString, string tableName, string dbName = null, string keyColumn = "keyName", string valueColumn = "value")
+        public LocalDbTarget(string connectionString, string tableName, string dbName = null, string keyColumn = "optionName", string valueColumn = "value")
         {
             _connectionString = connectionString;
             _tableName = tableName;
@@ -49,7 +53,7 @@ namespace WKFramework.Settings.Targets
             string sql = 
                 String.Format(
                     "IF NOT (EXISTS(SELECT name FROM master.dbo.sysdatabases WHERE '[' + name + ']' = N'{0}' OR name = N'{0}'))" +
-                        "CREATE DATABASE {0} ON PRIMARY (NAME = '{0}', FILENAME = '{1}', SIZE = 4MB, FILEGROWTH = 10%);",
+                        "CREATE DATABASE [{0}] ON PRIMARY (NAME = '{0}', FILENAME = '{1}');",
                     _dbName, filePath);
 
             ExecuteCommand(sql);
@@ -60,10 +64,10 @@ namespace WKFramework.Settings.Targets
             string sql =
                 String.Format(
                     @"IF OBJECT_ID (N'{0}', N'U') IS NULL 
-                        CREATE TABLE {0} (
-                        {1} nvarchar(50) NOT NULL,
-                        {2} varbinary(MAX),
-                        UNIQUE({1})
+                        CREATE TABLE [{0}] (
+                            {1} nvarchar(50) NOT NULL,
+                            {2} varbinary(MAX),
+                            UNIQUE({1})
                         )",
                    _tableName, _keyColumn, _valueColumn);
 
@@ -83,6 +87,8 @@ namespace WKFramework.Settings.Targets
         }
         #endregion
 
+        #region Database operations
+
         private int ExecuteCommand(string sql)
         {
             using (var connection = new SqlConnection(_connectionString))
@@ -93,26 +99,26 @@ namespace WKFramework.Settings.Targets
             }
         }
 
-        public V ReadValue<V>(K key, V defaultValue = default(V))
+        private void ExecuteQuery(string sql, Action<SqlCommand> commandAction, Action<SqlDataReader> resultAction)
         {
-            throw new NotImplementedException();
+            using (var connection = new SqlConnection(_connectionString))
+            using (var command = new SqlCommand(sql, connection))
+            {
+                connection.Open();
+                commandAction(command);
+                using (var reader = command.ExecuteReader())
+                {
+                    resultAction(reader);
+                }
+            }
         }
 
-        public IDictionary<K, V> ReadMany<V>(IEnumerable<K> keys)
-        {
-            throw new NotImplementedException();
-        }
-
-        public bool WriteValue<V>(K key, V value)
+        private int ExecuteCommandInTransaction(string sql, Action<SqlCommand> action)
         {
             int affectedRows = 0;
-            string commandSql = String.Format(@"UPDATE {0} SET {2}=@Value WHERE {1}=@Key
-                                                IF @@ROWCOUNT = 0
-                                                    INSERT INTO {0} ({1}, {2}) VALUES (@Key, @Value)",
-                                                _tableName, _keyColumn, _valueColumn);
 
             using (var connection = new SqlConnection(_connectionString))
-            using (var command = new SqlCommand(commandSql, connection))
+            using (var command = new SqlCommand(sql, connection))
             {
                 connection.Open();
 
@@ -121,8 +127,8 @@ namespace WKFramework.Settings.Targets
                 {
                     command.Transaction = transaction;
 
-                    command.Parameters.AddWithValue("@Key", key.ToString());
-                    command.Parameters.Add("@Value", System.Data.SqlDbType.VarBinary).Value = System.Text.UTF8Encoding.UTF8.GetBytes(value.ToString());
+                    if (action != null)
+                        action(command);
 
                     affectedRows = command.ExecuteNonQuery();
                     transaction.Commit();
@@ -134,6 +140,50 @@ namespace WKFramework.Settings.Targets
                 }
             }
 
+            return affectedRows;
+        }
+
+        #endregion
+
+        public V ReadValue<V>(K key, V defaultValue = default(V))
+        {
+            V result = defaultValue;
+            string sql = String.Format("SELECT [{0}] FROM [{1}] WHERE [{2}] = @Key", _valueColumn, _tableName, _keyColumn);
+
+            ExecuteQuery(sql, 
+                command =>
+                {
+                    command.Parameters.AddWithValue("@Key", key.ToString());
+                }, 
+                sqlReader => 
+                {
+                    if (sqlReader.Read())
+                    {
+                        result = _serializer.ConvertFromBinary<V>((byte[])sqlReader[0]);
+                    }
+                });
+
+            return result;
+        }
+
+        public IDictionary<K, V> ReadMany<V>(IEnumerable<K> keys)
+        {
+            throw new NotImplementedException();
+        }
+
+        public bool WriteValue<V>(K key, V value)
+        {
+            string commandSql = String.Format(@"UPDATE [{0}] SET [{2}]=@Value WHERE [{1}]=@Key
+                                                IF @@ROWCOUNT = 0
+                                                    INSERT INTO [{0}] ([{1}], [{2}]) VALUES (@Key, @Value)",
+                                                _tableName, _keyColumn, _valueColumn);
+
+            int affectedRows = ExecuteCommandInTransaction(commandSql, command =>
+                {
+                    command.Parameters.AddWithValue("@Key", key.ToString());
+                    command.Parameters.AddWithValue("@Value", _serializer.ConvertToBinary(value));
+                });
+
             return affectedRows > 0;
         }
 
@@ -144,7 +194,6 @@ namespace WKFramework.Settings.Targets
 
         public void Dispose()
         {
-            throw new NotImplementedException();
         }
     }
 }
