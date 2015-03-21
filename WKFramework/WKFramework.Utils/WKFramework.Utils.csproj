@@ -41,10 +41,8 @@
   <ItemGroup>
     <Compile Include="AppUtils.cs" />
     <Compile Include="Serializer\BinarySerializer.cs" />
-    <Compile Include="Serializer\IConverter.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Serializer\ISerializer.cs" />
-    <Compile Include="Serializer\Serializer.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
