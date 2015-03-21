@@ -4,6 +4,7 @@ using WKFramework.Settings.Targets;
 using WKFramework.UnitTests.SettingsTests.TestClasses;
 using System.Data.SqlClient;
 using WKFramework.Utils;
+using System.Collections.Generic;
 
 namespace WKFramework.UnitTests.SettingsTests
 {
@@ -39,8 +40,8 @@ namespace WKFramework.UnitTests.SettingsTests
         {
             var target = new MsSqlServerTarget<string>(_connectionString, _tableName, _dbName);
 
-            target.WriteValue<string>("option1", "value1");
-            target.WriteValue<TestValueEnum>("option2", TestValueEnum.Value2);
+            target.WriteValue("option1", "value1");
+            target.WriteValue("option2", TestValueEnum.Value2);
 
             Assert.AreEqual("value1", target.ReadValue<string>("option1"));
             Assert.AreEqual(TestValueEnum.Value2, target.ReadValue<TestValueEnum>("option2"));
@@ -51,8 +52,8 @@ namespace WKFramework.UnitTests.SettingsTests
         {
             var target = new MsSqlServerTarget<TestKeyEnum>(_connectionString, _tableName, _dbName);
 
-            target.WriteValue<string>(TestKeyEnum.Key1, "value1");
-            target.WriteValue<TestValueEnum>(TestKeyEnum.Key2, TestValueEnum.Value2);
+            target.WriteValue(TestKeyEnum.Key1, "value1");
+            target.WriteValue(TestKeyEnum.Key2, TestValueEnum.Value2);
 
             Assert.AreEqual("value1", target.ReadValue<string>(TestKeyEnum.Key1));
             Assert.AreEqual(TestValueEnum.Value2, target.ReadValue<TestValueEnum>(TestKeyEnum.Key2));
@@ -63,11 +64,65 @@ namespace WKFramework.UnitTests.SettingsTests
         {
             var target = new MsSqlServerTarget<TestKeyEnum>(_connectionString, _tableName, _dbName, System.Data.SqlDbType.NVarChar, "200", new ToStringSerializer());
 
-            target.WriteValue<string>(TestKeyEnum.Key1, "value1");
-            target.WriteValue<TestValueEnum>(TestKeyEnum.Key2, TestValueEnum.Value2);
+            target.WriteValue(TestKeyEnum.Key1, "value1");
+            target.WriteValue(TestKeyEnum.Key2, TestValueEnum.Value2);
 
             Assert.AreEqual("value1", target.ReadValue<string>(TestKeyEnum.Key1));
             Assert.AreEqual(TestValueEnum.Value2, target.ReadValue<TestValueEnum>(TestKeyEnum.Key2));
+        }
+
+        [TestMethod]
+        public void ReadManyTest()
+        {
+            var target = new MsSqlServerTarget<TestKeyEnum>(_connectionString, _tableName, _dbName);
+
+            target.WriteValue(TestKeyEnum.Key1, "value1");
+            target.WriteValue(TestKeyEnum.Key2, TestValueEnum.Value2);
+            target.WriteValue(TestKeyEnum.Key3, TestValueEnum.Value3);
+
+            var result = target.ReadMany(new TestKeyEnum[] { TestKeyEnum.Key2, TestKeyEnum.Key3 });
+            Assert.AreEqual(2, result.Count);
+            Assert.AreEqual(TestValueEnum.Value2, result[TestKeyEnum.Key2]);
+            Assert.AreEqual(TestValueEnum.Value3, result[TestKeyEnum.Key3]);
+
+            result = target.ReadMany(new TestKeyEnum[] { TestKeyEnum.Key1, TestKeyEnum.Key2, TestKeyEnum.Key3 });
+            Assert.AreEqual(3, result.Count);
+            Assert.AreEqual("value1", result[TestKeyEnum.Key1]);
+            Assert.AreEqual(TestValueEnum.Value2, result[TestKeyEnum.Key2]);
+            Assert.AreEqual(TestValueEnum.Value3, result[TestKeyEnum.Key3]);
+
+            result = target.ReadMany(new TestKeyEnum[] { TestKeyEnum.Key4 });
+            Assert.AreEqual(0, result.Count);
+        }
+
+        [TestMethod]
+        public void WriteManyTest()
+        {
+            var target = new MsSqlServerTarget<TestKeyEnum>(_connectionString, _tableName, _dbName);
+
+            target.WriteMany(new Dictionary<TestKeyEnum, object>() 
+            { 
+                { TestKeyEnum.Key1, "value1" },
+                { TestKeyEnum.Key3, TestValueEnum.Value3 }
+            });
+
+            var result = target.ReadMany(new TestKeyEnum[] { TestKeyEnum.Key1, TestKeyEnum.Key2, TestKeyEnum.Key3, TestKeyEnum.Key4 });
+            Assert.AreEqual(2, result.Count);
+            Assert.AreEqual("value1", result[TestKeyEnum.Key1]);
+            Assert.AreEqual(TestValueEnum.Value3, result[TestKeyEnum.Key3]);
+        }
+
+        [TestMethod]
+        public void ReadDefaultValueTest()
+        {
+            var target = new MsSqlServerTarget<TestKeyEnum>(_connectionString, _tableName, _dbName);
+            target.WriteValue(TestKeyEnum.Key1, "value1");
+
+            Assert.IsNull(target.ReadValue<string>(TestKeyEnum.Key2));
+            Assert.AreEqual("unavailable", target.ReadValue(TestKeyEnum.Key2, "unavailable"));
+
+            Assert.AreEqual(0, target.ReadValue<int>(TestKeyEnum.Key2));
+            Assert.AreEqual(-1, target.ReadValue<int>(TestKeyEnum.Key2, -1));
         }
     }
 }

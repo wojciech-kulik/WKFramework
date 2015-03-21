@@ -6,14 +6,20 @@ using System.Threading.Tasks;
 
 namespace WKFramework.Settings.Targets
 {
-    public interface ISettingsTarget<K> : IDisposable
+    public interface ISettingsTarget<TKey> : IDisposable
     {
-        V ReadValue<V>(K key, V defaultValue = default(V));
+        object ReadValue(TKey key, object defaultValue = null);
 
-        IDictionary<K, V> ReadMany<V>(IEnumerable<K> keys);
+        V ReadValue<V>(TKey key, V defaultValue = default(V));
 
-        bool WriteValue<V>(K key, V value);
+        IDictionary<TKey, object> ReadMany(IEnumerable<TKey> keys);
 
-        bool WriteMany<V>(IDictionary<K, V> values);
+        IDictionary<TKey, V> ReadMany<V>(IEnumerable<TKey> keys);
+
+        bool WriteValue(TKey key, object value);
+
+        bool WriteMany(IDictionary<TKey, object> values);
+
+        void SetKeyConversion(Func<TKey, string> conversion);
     }
 }
