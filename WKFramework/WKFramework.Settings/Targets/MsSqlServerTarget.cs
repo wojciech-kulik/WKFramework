@@ -39,15 +39,14 @@ namespace WKFramework.Settings.Targets
         }
 
         public MsSqlServerTarget(string connectionString, string tableName, string dbName,
-                                 SqlDbType valueDbType, string valueDbTypeSizeLimit,
-                                 ISerializer serializer)
+                                 SqlDbType valueDbType, string valueDbTypeSizeLimit, ISerializer valueSerializer)
         {
             _connectionString = connectionString;
             _tableName = tableName;
             _dbName = dbName;
             _valueDbType = valueDbType;
             _valueDbTypeSizeLimit = valueDbTypeSizeLimit;
-            _serializer = serializer;
+            _serializer = valueSerializer;
 
             InitializeDatabase();
         }
@@ -56,11 +55,15 @@ namespace WKFramework.Settings.Targets
 
         private const string KeyParam = "@Key";
 
+        private const string KeyToDelParam = "@KeyToDel";
+
         private const string ValueParam = "@Value";
 
         private const string SelectQuery = "SELECT [{0}] FROM [{1}] WHERE [{2}] = @Key";
 
         private const string SelectManyQuery = "SELECT [{2}], [{0}] FROM [{1}] WHERE [{2}] in ({3})";
+
+        private const string SelectAllQuery = "SELECT [{0}], [{1}] FROM [{2}]";
 
         private const string UpdateQuery = "UPDATE [{0}] SET [{2}]=@Value WHERE [{1}]=@Key \r\n" +
                                            " IF @@ROWCOUNT = 0 \r\n" +
@@ -68,6 +71,12 @@ namespace WKFramework.Settings.Targets
 
         private const string UpdateManyQuery = "DELETE FROM [{0}] WHERE [{1}] in ({3}); \r\n" +
                                                "INSERT INTO [{0}] ([{1}], [{2}]) VALUES {4};";
+
+        private const string DeleteQuery = "DELETE FROM [{0}] WHERE [{1}] = @Key"; 
+
+        private const string DeleteManyQuery = "DELETE FROM [{0}] WHERE [{1}] in ({2})";
+
+        private const string DeleteAllQuery = "DELETE FROM [{0}]";
 
         private const string CreateDatabaseQuery = "IF NOT EXISTS(SELECT name FROM master.dbo.sysdatabases WHERE '[' + name + ']' = N'{0}' OR name = N'{0}') \r\n" +
                                                    "   CREATE DATABASE [{0}] ON PRIMARY (NAME = '{0}', FILENAME = '{1}')";
@@ -127,12 +136,16 @@ namespace WKFramework.Settings.Targets
 
         #region Database operations
 
-        private int ExecuteCommand(string sql)
+        private int ExecuteCommand(string sql, Action<SqlCommand> commandAction = null)
         {
             using (var connection = new SqlConnection(_connectionString))
             using (var command = new SqlCommand(sql, connection))
             {
                 connection.Open();
+
+                if (commandAction != null)
+                    commandAction(command);
+
                 return command.ExecuteNonQuery();
             }
         }
@@ -143,7 +156,10 @@ namespace WKFramework.Settings.Targets
             using (var command = new SqlCommand(sql, connection))
             {
                 connection.Open();
-                commandAction(command);
+
+                if (commandAction != null)
+                    commandAction(command);
+
                 using (var reader = command.ExecuteReader())
                 {
                     resultAction(reader);
@@ -246,6 +262,9 @@ namespace WKFramework.Settings.Targets
 
         public IDictionary<TKey, TValue> ReadMany<TValue>(IEnumerable<TKey> keys)
         {
+            if (keys.Count() == 0)
+                return new Dictionary<TKey, TValue>();
+
             var result = new Dictionary<TKey, TValue>();
             var keysDictionary = new Dictionary<string, TKey>();
             foreach (var key in keys)
@@ -277,6 +296,30 @@ namespace WKFramework.Settings.Targets
             return result;
         }
 
+        public IDictionary<string, object> ReadAll()
+        {
+            return ReadAll<object>();
+        }
+
+        public IDictionary<string, TValue> ReadAll<TValue>()
+        {
+            var result = new Dictionary<string, TValue>();
+            var sql = String.Format(SelectAllQuery, _keyColumn, _valueColumn, _tableName);
+
+            ExecuteQuery(sql, null,
+                sqlReader =>
+                {
+                    while (sqlReader.Read())
+                    {
+                        var key = (string)sqlReader[0];
+                        var value = (TValue)_serializer.Deserialize(sqlReader[1]);
+                        result.Add(key, value);
+                    }
+                });
+
+            return result;
+        }
+
         public bool WriteValue(TKey key, object value)
         {
             string commandSql = String.Format(UpdateQuery, _tableName, _keyColumn, _valueColumn);
@@ -296,8 +339,7 @@ namespace WKFramework.Settings.Targets
             StringBuilder valuesToInsert = new StringBuilder();
             for (int i = 0; i < count; i++)
             {
-                keys.Append(KeyParam);
-                keys.Append("ToDel");
+                keys.Append(KeyToDelParam);
                 keys.Append(i);
                 if (i < count - 1)
                     keys.Append(", ");
@@ -318,6 +360,9 @@ namespace WKFramework.Settings.Targets
 
         public bool WriteMany(IDictionary<TKey, object> values)
         {
+            if (values.Count() == 0)
+                return true;
+
             var sql = PrepareWriteManySQL(values.Count);
 
             int affectedRows = ExecuteCommandInTransaction(sql, command =>
@@ -325,7 +370,7 @@ namespace WKFramework.Settings.Targets
                 int i = 0;
                 foreach (var item in values)
                 {
-                    command.Parameters.AddWithValue(KeyParam + "ToDel" + i.ToString(), ConvertKey(item.Key));
+                    command.Parameters.AddWithValue(KeyToDelParam + i.ToString(), ConvertKey(item.Key));
                     command.Parameters.AddWithValue(KeyParam + i.ToString(), ConvertKey(item.Key));
                     command.Parameters.AddWithValue(ValueParam + i.ToString(), _serializer.Serialize(item.Value));
 
@@ -336,8 +381,53 @@ namespace WKFramework.Settings.Targets
             return affectedRows == values.Count;
         }
 
-        public void Dispose()
+        public bool RemoveValue(TKey key)
         {
+            string commandSql = String.Format(DeleteQuery, _tableName, _keyColumn);
+
+            int affectedRows = ExecuteCommand(commandSql, command =>
+            {
+                command.Parameters.AddWithValue(KeyParam, ConvertKey(key));
+            });
+
+            return affectedRows > 0;
+        }
+
+        private string PrepareRemoveManySQL(int count)
+        {
+            StringBuilder listOfParams = new StringBuilder();
+            for (int i = 0; i < count; i++)
+            {
+                listOfParams.Append(KeyParam);
+                listOfParams.Append(i);
+                if (i < count - 1)
+                    listOfParams.Append(", ");
+            }
+
+            return String.Format(DeleteManyQuery, _tableName, _keyColumn, listOfParams.ToString());
+        }
+
+        public bool RemoveMany(IEnumerable<TKey> keys)
+        {
+            if (keys.Count() == 0)
+                return true;
+
+            int affectedRows = ExecuteCommand(PrepareRemoveManySQL(keys.Count()), command =>
+            {
+                int i = 0;
+                foreach (var key in keys)
+                {
+                    command.Parameters.AddWithValue(KeyParam + i.ToString(), ConvertKey(key));
+                    i++;
+                }
+            });
+
+            return affectedRows == keys.Count();
+        }
+
+        public void RemoveAll()
+        {
+            ExecuteCommand(String.Format(DeleteAllQuery, _tableName));
         }
     }
 }

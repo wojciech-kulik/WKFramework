@@ -35,8 +35,22 @@ namespace WKFramework.UnitTests.SettingsTests
             }
         }
 
+        private MsSqlServerTarget<TestKeyEnum> CreateTargetAndFill()
+        {
+            var target = new MsSqlServerTarget<TestKeyEnum>(_connectionString, _tableName, _dbName);
+            FillTarget(target);
+            return target;
+        }
+
+        private void FillTarget(MsSqlServerTarget<TestKeyEnum> target)
+        {
+            target.WriteValue(TestKeyEnum.Key1, "value1");
+            target.WriteValue(TestKeyEnum.Key2, TestValueEnum.Value2);
+            target.WriteValue(TestKeyEnum.Key3, TestValueEnum.Value3);
+        }
+
         [TestMethod]
-        public void StringAsKeyTest()
+        public void WriteReadStringAsKeyTest()
         {
             var target = new MsSqlServerTarget<string>(_connectionString, _tableName, _dbName);
 
@@ -48,7 +62,7 @@ namespace WKFramework.UnitTests.SettingsTests
         }
 
         [TestMethod]
-        public void EnumAsKeyTest()
+        public void WriteReadEnumAsKeyTest()
         {
             var target = new MsSqlServerTarget<TestKeyEnum>(_connectionString, _tableName, _dbName);
 
@@ -57,42 +71,6 @@ namespace WKFramework.UnitTests.SettingsTests
 
             Assert.AreEqual("value1", target.ReadValue<string>(TestKeyEnum.Key1));
             Assert.AreEqual(TestValueEnum.Value2, target.ReadValue<TestValueEnum>(TestKeyEnum.Key2));
-        }
-
-        [TestMethod]
-        public void CustomValueDBTypeTest()
-        {
-            var target = new MsSqlServerTarget<TestKeyEnum>(_connectionString, _tableName, _dbName, System.Data.SqlDbType.NVarChar, "200", new ToStringSerializer());
-
-            target.WriteValue(TestKeyEnum.Key1, "value1");
-            target.WriteValue(TestKeyEnum.Key2, TestValueEnum.Value2);
-
-            Assert.AreEqual("value1", target.ReadValue<string>(TestKeyEnum.Key1));
-            Assert.AreEqual(TestValueEnum.Value2, target.ReadValue<TestValueEnum>(TestKeyEnum.Key2));
-        }
-
-        [TestMethod]
-        public void ReadManyTest()
-        {
-            var target = new MsSqlServerTarget<TestKeyEnum>(_connectionString, _tableName, _dbName);
-
-            target.WriteValue(TestKeyEnum.Key1, "value1");
-            target.WriteValue(TestKeyEnum.Key2, TestValueEnum.Value2);
-            target.WriteValue(TestKeyEnum.Key3, TestValueEnum.Value3);
-
-            var result = target.ReadMany(new TestKeyEnum[] { TestKeyEnum.Key2, TestKeyEnum.Key3 });
-            Assert.AreEqual(2, result.Count);
-            Assert.AreEqual(TestValueEnum.Value2, result[TestKeyEnum.Key2]);
-            Assert.AreEqual(TestValueEnum.Value3, result[TestKeyEnum.Key3]);
-
-            result = target.ReadMany(new TestKeyEnum[] { TestKeyEnum.Key1, TestKeyEnum.Key2, TestKeyEnum.Key3 });
-            Assert.AreEqual(3, result.Count);
-            Assert.AreEqual("value1", result[TestKeyEnum.Key1]);
-            Assert.AreEqual(TestValueEnum.Value2, result[TestKeyEnum.Key2]);
-            Assert.AreEqual(TestValueEnum.Value3, result[TestKeyEnum.Key3]);
-
-            result = target.ReadMany(new TestKeyEnum[] { TestKeyEnum.Key4 });
-            Assert.AreEqual(0, result.Count);
         }
 
         [TestMethod]
@@ -113,6 +91,45 @@ namespace WKFramework.UnitTests.SettingsTests
         }
 
         [TestMethod]
+        public void ReadManyTest()
+        {
+            var target = CreateTargetAndFill();
+
+            var result = target.ReadMany(new TestKeyEnum[] { TestKeyEnum.Key2, TestKeyEnum.Key3 });
+            Assert.AreEqual(2, result.Count);
+            Assert.AreEqual(TestValueEnum.Value2, result[TestKeyEnum.Key2]);
+            Assert.AreEqual(TestValueEnum.Value3, result[TestKeyEnum.Key3]);
+
+            result = target.ReadMany(new TestKeyEnum[] { TestKeyEnum.Key1, TestKeyEnum.Key2, TestKeyEnum.Key3 });
+            Assert.AreEqual(3, result.Count);
+            Assert.AreEqual("value1", result[TestKeyEnum.Key1]);
+            Assert.AreEqual(TestValueEnum.Value2, result[TestKeyEnum.Key2]);
+            Assert.AreEqual(TestValueEnum.Value3, result[TestKeyEnum.Key3]);
+
+            var resultWithType = target.ReadMany<TestValueEnum>(new TestKeyEnum[] { TestKeyEnum.Key4 });
+            Assert.AreEqual(0, resultWithType.Count);
+
+            resultWithType = target.ReadMany<TestValueEnum>(new TestKeyEnum[] { TestKeyEnum.Key3, TestKeyEnum.Key4 });
+            Assert.AreEqual(1, resultWithType.Count);
+            Assert.AreEqual(TestValueEnum.Value3, resultWithType[TestKeyEnum.Key3]);
+        }
+
+        [TestMethod]
+        public void ReadAllTest()
+        {
+            var target = CreateTargetAndFill();
+
+            var result = target.ReadAll();
+            Assert.AreEqual(3, result.Count);
+            Assert.AreEqual(result[TestKeyEnum.Key1.ToString()], "value1");
+            Assert.AreEqual(result[TestKeyEnum.Key2.ToString()], TestValueEnum.Value2);
+            Assert.AreEqual(result[TestKeyEnum.Key3.ToString()], TestValueEnum.Value3);
+
+            target.RemoveAll();
+            Assert.AreEqual(0, target.ReadAll().Count);
+        }
+
+        [TestMethod]
         public void ReadDefaultValueTest()
         {
             var target = new MsSqlServerTarget<TestKeyEnum>(_connectionString, _tableName, _dbName);
@@ -123,6 +140,109 @@ namespace WKFramework.UnitTests.SettingsTests
 
             Assert.AreEqual(0, target.ReadValue<int>(TestKeyEnum.Key2));
             Assert.AreEqual(-1, target.ReadValue<int>(TestKeyEnum.Key2, -1));
+        }
+
+        [TestMethod]
+        public void RemoveTest()
+        {
+            var target = CreateTargetAndFill();
+
+            target.RemoveValue(TestKeyEnum.Key2);
+            Assert.AreEqual(2, target.ReadAll().Count);
+            Assert.IsNotNull(target.ReadValue(TestKeyEnum.Key1));
+            Assert.IsNotNull(target.ReadValue(TestKeyEnum.Key3));
+
+            target.RemoveValue(TestKeyEnum.Key3);
+            Assert.AreEqual(1, target.ReadAll().Count);
+            Assert.IsNotNull(target.ReadValue(TestKeyEnum.Key1));
+
+            target.RemoveValue(TestKeyEnum.Key1);
+            Assert.AreEqual(0, target.ReadAll().Count);
+        }
+
+        [TestMethod]
+        public void RemoveManyTest()
+        {
+            var target = CreateTargetAndFill();
+
+            target.RemoveMany(new TestKeyEnum[] { TestKeyEnum.Key2 });
+            Assert.AreEqual(2, target.ReadAll().Count);
+            Assert.IsNotNull(target.ReadValue(TestKeyEnum.Key1));
+            Assert.IsNotNull(target.ReadValue(TestKeyEnum.Key3));
+
+            target.RemoveMany(new TestKeyEnum[] { TestKeyEnum.Key1, TestKeyEnum.Key3 });
+            Assert.AreEqual(0, target.ReadAll().Count);
+        }
+
+        [TestMethod]
+        public void RemoveAllTest()
+        {
+            var target = CreateTargetAndFill();
+
+            Assert.AreEqual(3, target.ReadAll().Count);
+            target.RemoveAll();
+            Assert.AreEqual(0, target.ReadAll().Count);
+        }
+
+        [TestMethod]
+        public void RemoveResultTest()
+        {
+            var target = CreateTargetAndFill();
+
+            Assert.IsFalse(target.RemoveValue(TestKeyEnum.Key4));
+            Assert.IsTrue(target.RemoveValue(TestKeyEnum.Key3));
+
+            Assert.IsTrue(target.RemoveMany(new TestKeyEnum[]{}));
+            Assert.IsFalse(target.RemoveMany(new TestKeyEnum[] { TestKeyEnum.Key3, TestKeyEnum.Key4 }));
+            Assert.IsTrue(target.RemoveMany(new TestKeyEnum[] { TestKeyEnum.Key1, TestKeyEnum.Key2 }));
+
+            FillTarget(target);
+            Assert.IsFalse(target.RemoveMany(new TestKeyEnum[] { TestKeyEnum.Key3, TestKeyEnum.Key4 }));
+        }
+
+        [TestMethod]
+        public void CustomKeyConversionTest()
+        {
+            var target = new MsSqlServerTarget<TestKeyEnum>(_connectionString, _tableName, _dbName);
+            target.SetKeyConversion(x => "key_" + x.ToString());
+            FillTarget(target);
+
+            var settings = target.ReadAll();
+            Assert.IsTrue(settings.ContainsKey("key_" + TestKeyEnum.Key1.ToString()));
+            Assert.IsTrue(settings.ContainsKey("key_" + TestKeyEnum.Key2.ToString()));
+            Assert.IsTrue(settings.ContainsKey("key_" + TestKeyEnum.Key3.ToString()));
+
+            Assert.AreEqual("value1", target.ReadValue(TestKeyEnum.Key1));
+            Assert.IsTrue(target.RemoveValue(TestKeyEnum.Key2));
+
+            settings = target.ReadAll();
+            Assert.AreEqual(2, settings.Count);
+            Assert.IsTrue(settings.ContainsKey("key_" + TestKeyEnum.Key1.ToString()));
+            Assert.IsTrue(settings.ContainsKey("key_" + TestKeyEnum.Key3.ToString()));
+
+            target.RemoveAll();
+            target.SetKeyConversion(null);
+            FillTarget(target);
+
+            settings = target.ReadAll();
+            Assert.IsTrue(settings.ContainsKey(TestKeyEnum.Key1.ToString()));
+            Assert.IsTrue(settings.ContainsKey(TestKeyEnum.Key2.ToString()));
+            Assert.IsTrue(settings.ContainsKey(TestKeyEnum.Key3.ToString()));
+        }
+
+        [TestMethod]
+        public void CustomValueDBTypeTest()
+        {
+            var target = new MsSqlServerTarget<TestKeyEnum>(_connectionString, _tableName, _dbName, System.Data.SqlDbType.NVarChar, "200", new ToStringSerializer());
+
+            target.WriteValue(TestKeyEnum.Key1, "value1");
+            target.WriteValue(TestKeyEnum.Key2, TestValueEnum.Value2);
+
+            Assert.AreEqual("value1", target.ReadValue<string>(TestKeyEnum.Key1));
+            Assert.AreEqual(TestValueEnum.Value2, target.ReadValue<TestValueEnum>(TestKeyEnum.Key2));
+
+            Assert.IsTrue(target.RemoveValue(TestKeyEnum.Key1));
+            Assert.AreEqual(1, target.ReadAll().Count);
         }
     }
 }
