@@ -11,9 +11,9 @@ using System.IO;
 using WKFramework.Utils.Serializer;
 using System.Data;
 
-namespace WKFramework.Settings.Targets
+namespace WKFramework.Settings
 {
-    public class MsSqlServerTarget<TKey> : ISettingsTarget<TKey>
+    public class MsSqlServerSettings<TKey> : ISettings<TKey>
     {
         public const int MaxKeyLength = 50;
 
@@ -29,7 +29,7 @@ namespace WKFramework.Settings.Targets
         protected ISerializer _serializer = new BinarySerializer();
         protected Func<TKey, string> _keyConversion = x => x.ToString();
 
-        public MsSqlServerTarget(string connectionString, string tableName, string dbName = null)
+        public MsSqlServerSettings(string connectionString, string tableName, string dbName = null)
         {
             _connectionString = connectionString;
             _tableName = tableName;
@@ -38,7 +38,7 @@ namespace WKFramework.Settings.Targets
             InitializeDatabase();
         }
 
-        public MsSqlServerTarget(string connectionString, string tableName, string dbName,
+        public MsSqlServerSettings(string connectionString, string tableName, string dbName,
                                  SqlDbType valueDbType, string valueDbTypeSizeLimit, ISerializer valueSerializer)
         {
             _connectionString = connectionString;

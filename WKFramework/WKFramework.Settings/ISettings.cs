@@ -4,9 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace WKFramework.Settings.Targets
+namespace WKFramework.Settings
 {
-    public interface ISettingsTarget<TKey>
+    public interface ISettings<TKey>
     {
         object ReadValue(TKey key, object defaultValue = null);
 

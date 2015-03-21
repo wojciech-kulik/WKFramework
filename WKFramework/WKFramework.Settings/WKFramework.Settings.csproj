@@ -40,8 +40,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Targets\ISettingsTarget.cs" />
-    <Compile Include="Targets\MsSqlServerTarget.cs" />
+    <Compile Include="ISettings.cs" />
+    <Compile Include="MsSqlServerSettings.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\WKFramework.Utils\WKFramework.Utils.csproj">
