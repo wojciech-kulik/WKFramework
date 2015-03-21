@@ -36,6 +36,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
+    <Reference Include="System.Data" />
   </ItemGroup>
   <Choose>
     <When Condition="('$(VisualStudioVersion)' == '10.0' or '$(VisualStudioVersion)' == '') and '$(TargetFrameworkVersion)' == 'v3.5'">
@@ -53,11 +54,16 @@
     <Compile Include="SettingsTests\MsSqlServerTargetTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SettingsTests\TestClasses\TestEnums.cs" />
+    <Compile Include="SettingsTests\TestClasses\ToStringSerializer.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\WKFramework.Settings\WKFramework.Settings.csproj">
       <Project>{d30a5b6f-b1fc-47f0-a91a-d6a30ffd55fe}</Project>
       <Name>WKFramework.Settings</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\WKFramework.Utils\WKFramework.Utils.csproj">
+      <Project>{3e306f00-27c7-4b7e-854e-715415f9c3fa}</Project>
+      <Name>WKFramework.Utils</Name>
     </ProjectReference>
   </ItemGroup>
   <Choose>

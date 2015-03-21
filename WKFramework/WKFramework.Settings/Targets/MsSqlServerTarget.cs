@@ -8,28 +8,68 @@ using WKFramework.Utils;
 using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.IO;
+using WKFramework.Utils.Serializer;
+using System.Data;
 
 namespace WKFramework.Settings.Targets
 {
-    public class MsSqlServerTarget<K> : ISettingsTarget<K>
+    public class MsSqlServerTarget<TKey> : ISettingsTarget<TKey>
     {
-        private readonly string _keyColumn;
-        private readonly string _valueColumn;
+        private readonly string _keyColumn = "optionName";
+        private readonly string _valueColumn = "value";
         private readonly string _tableName;
+        private readonly SqlDbType _valueDbType = SqlDbType.VarBinary;
+        private readonly string _valueDbTypeSizeLimit = "MAX";
         private string _dbName;
         private string _connectionString;
-        private BinarySerializer _serializer = new BinarySerializer();
+        private ISerializer _serializer = new BinarySerializer();
 
-        public MsSqlServerTarget(string connectionString, string tableName, string dbName = null, string keyColumn = "optionName", string valueColumn = "value")
+        public MsSqlServerTarget(string connectionString, string tableName, string dbName = null)
         {
             _connectionString = connectionString;
             _tableName = tableName;
             _dbName = dbName;
-            _keyColumn = keyColumn;
-            _valueColumn = valueColumn;
 
             InitializeDatabase();
         }
+
+        public MsSqlServerTarget(string connectionString, string tableName, string dbName,
+                                 SqlDbType valueDbType, string valueDbTypeSizeLimit,
+                                 ISerializer serializer)
+        {
+            _connectionString = connectionString;
+            _tableName = tableName;
+            _dbName = dbName;
+            _valueDbType = valueDbType;
+            _valueDbTypeSizeLimit = valueDbTypeSizeLimit;
+            _serializer = serializer;
+
+            InitializeDatabase();
+        }
+
+        #region SQL Queries
+
+        private const string KeyParam = "@Key";
+
+        private const string ValueParam = "@Value";
+
+        private const string SelectQuery = "SELECT [{0}] FROM [{1}] WHERE [{2}] = @Key";
+
+        private const string UpdateQuery = @"UPDATE [{0}] SET [{2}]=@Value WHERE [{1}]=@Key
+                                             IF @@ROWCOUNT = 0
+                                                INSERT INTO [{0}] ([{1}], [{2}]) VALUES (@Key, @Value)";
+
+        private const string CreateDatabaseQuery = @"IF NOT EXISTS(SELECT name FROM master.dbo.sysdatabases WHERE '[' + name + ']' = N'{0}' OR name = N'{0}')
+                                                        CREATE DATABASE [{0}] ON PRIMARY (NAME = '{0}', FILENAME = '{1}')";
+
+        private const string CreateTableQuery = @"IF NOT EXISTS(SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = '{0}')
+                                                    CREATE TABLE [{0}] (
+                                                        {1} nvarchar(50) NOT NULL,
+                                                        {2} {3}{4},
+                                                        UNIQUE({1})
+                                                    )";
+
+        #endregion
 
         #region Database initialization
 
@@ -50,27 +90,15 @@ namespace WKFramework.Settings.Targets
         private void CreateDatabase()
         {
             string filePath = String.Format(@"{0}\{1}.mdf", AppUtils.AssemblyDirectory, _dbName);
-            string sql = 
-                String.Format(
-                    "IF NOT (EXISTS(SELECT name FROM master.dbo.sysdatabases WHERE '[' + name + ']' = N'{0}' OR name = N'{0}'))" +
-                        "CREATE DATABASE [{0}] ON PRIMARY (NAME = '{0}', FILENAME = '{1}');",
-                    _dbName, filePath);
-
+            string sql = String.Format(CreateDatabaseQuery, _dbName, filePath);
             ExecuteCommand(sql);
         }
 
         private void CreateTable()
         {
-            string sql =
-                String.Format(
-                    @"IF OBJECT_ID (N'{0}', N'U') IS NULL 
-                        CREATE TABLE [{0}] (
-                            {1} nvarchar(50) NOT NULL,
-                            {2} varbinary(MAX),
-                            UNIQUE({1})
-                        )",
-                   _tableName, _keyColumn, _valueColumn);
-
+            string sql = String.Format(CreateTableQuery,
+                            _tableName, _keyColumn, _valueColumn, _valueDbType.ToString(), 
+                            String.IsNullOrEmpty(_valueDbTypeSizeLimit) ? String.Empty : "(" + _valueDbTypeSizeLimit + ")");
             ExecuteCommand(sql);
         }
 
@@ -145,49 +173,46 @@ namespace WKFramework.Settings.Targets
 
         #endregion
 
-        public V ReadValue<V>(K key, V defaultValue = default(V))
+        public TValue ReadValue<TValue>(TKey key, TValue defaultValue = default(TValue))
         {
-            V result = defaultValue;
-            string sql = String.Format("SELECT [{0}] FROM [{1}] WHERE [{2}] = @Key", _valueColumn, _tableName, _keyColumn);
+            TValue result = defaultValue;
+            string sql = String.Format(SelectQuery, _valueColumn, _tableName, _keyColumn);
 
             ExecuteQuery(sql, 
                 command =>
                 {
-                    command.Parameters.AddWithValue("@Key", key.ToString());
+                    command.Parameters.AddWithValue(KeyParam, key.ToString());
                 }, 
                 sqlReader => 
                 {
                     if (sqlReader.Read())
                     {
-                        result = _serializer.ConvertFromBinary<V>((byte[])sqlReader[0]);
+                        result = (TValue)_serializer.Deserialize(sqlReader[0]);
                     }
                 });
 
             return result;
         }
 
-        public IDictionary<K, V> ReadMany<V>(IEnumerable<K> keys)
+        public IDictionary<TKey, TValue> ReadMany<TValue>(IEnumerable<TKey> keys)
         {
             throw new NotImplementedException();
         }
 
-        public bool WriteValue<V>(K key, V value)
+        public bool WriteValue<TValue>(TKey key, TValue value)
         {
-            string commandSql = String.Format(@"UPDATE [{0}] SET [{2}]=@Value WHERE [{1}]=@Key
-                                                IF @@ROWCOUNT = 0
-                                                    INSERT INTO [{0}] ([{1}], [{2}]) VALUES (@Key, @Value)",
-                                                _tableName, _keyColumn, _valueColumn);
+            string commandSql = String.Format(UpdateQuery, _tableName, _keyColumn, _valueColumn);
 
             int affectedRows = ExecuteCommandInTransaction(commandSql, command =>
                 {
-                    command.Parameters.AddWithValue("@Key", key.ToString());
-                    command.Parameters.AddWithValue("@Value", _serializer.ConvertToBinary(value));
+                    command.Parameters.AddWithValue(KeyParam, key.ToString());
+                    command.Parameters.AddWithValue(ValueParam, _serializer.Serialize(value));
                 });
 
             return affectedRows > 0;
         }
 
-        public bool WriteMany<V>(IDictionary<K, V> values)
+        public bool WriteMany<TValue>(IDictionary<TKey, TValue> values)
         {
             throw new NotImplementedException();
         }
