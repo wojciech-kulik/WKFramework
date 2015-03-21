@@ -6,9 +6,9 @@ using System.Runtime.Serialization.Formatters.Binary;
 
 namespace WKFramework.Utils.Serializer
 {
-    public class BinarySerializer : ISerializer<byte[]>, ISerializer
+    public class BinarySerializer : Serializer<byte[]>
     {
-        public virtual byte[] Serialize<TSource>(TSource obj)
+        public override byte[] Serialize<TSource>(TSource obj)
         {
             using (var stream = new MemoryStream())
             {
@@ -25,7 +25,7 @@ namespace WKFramework.Utils.Serializer
             }
         }
 
-        public virtual TResult Deserialize<TResult>(byte[] data)
+        public override TResult Deserialize<TResult>(byte[] data)
         {
             using (var stream = new MemoryStream())
             {
@@ -35,19 +35,5 @@ namespace WKFramework.Utils.Serializer
                 return (TResult)new BinaryFormatter().Deserialize(stream);
             }
         }
-
-        #region ISerializer
-
-        object ISerializer.Serialize(object obj)
-        {
-            return Serialize(obj);
-        }
-
-        object ISerializer.Deserialize(object obj)
-        {
-            return Deserialize<object>((byte[])obj);
-        }
-
-        #endregion
     }
 }
