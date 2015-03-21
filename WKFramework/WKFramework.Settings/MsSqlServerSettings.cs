@@ -2,12 +2,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 using System.Data.SqlClient;
 using WKFramework.Utils;
-using System.Runtime.Serialization;
-using System.Runtime.Serialization.Formatters.Binary;
-using System.IO;
 using WKFramework.Utils.Serializer;
 using System.Data;
 
@@ -39,7 +35,7 @@ namespace WKFramework.Settings
         }
 
         public MsSqlServerSettings(string connectionString, string tableName, string dbName,
-                                 SqlDbType valueDbType, string valueDbTypeSizeLimit, ISerializer valueSerializer)
+                                   SqlDbType valueDbType, string valueDbTypeSizeLimit, ISerializer valueSerializer)
         {
             _connectionString = connectionString;
             _tableName = tableName;
@@ -92,7 +88,7 @@ namespace WKFramework.Settings
 
         #region Database initialization
 
-        private void InitializeDatabase()
+        protected void InitializeDatabase()
         {
             if (_dbName == null)
             {
@@ -136,7 +132,7 @@ namespace WKFramework.Settings
 
         #region Database operations
 
-        private int ExecuteCommand(string sql, Action<SqlCommand> commandAction = null)
+        protected int ExecuteCommand(string sql, Action<SqlCommand> commandAction = null)
         {
             using (var connection = new SqlConnection(_connectionString))
             using (var command = new SqlCommand(sql, connection))
@@ -150,7 +146,7 @@ namespace WKFramework.Settings
             }
         }
 
-        private void ExecuteQuery(string sql, Action<SqlCommand> commandAction, Action<SqlDataReader> resultAction)
+        protected void ExecuteQuery(string sql, Action<SqlCommand> commandAction, Action<SqlDataReader> resultAction)
         {
             using (var connection = new SqlConnection(_connectionString))
             using (var command = new SqlCommand(sql, connection))
@@ -167,7 +163,7 @@ namespace WKFramework.Settings
             }
         }
 
-        private int ExecuteCommandInTransaction(string sql, Action<SqlCommand> action)
+        protected int ExecuteCommandInTransaction(string sql, Action<SqlCommand> action)
         {
             int affectedRows = 0;
 
@@ -195,6 +191,59 @@ namespace WKFramework.Settings
             }
 
             return affectedRows;
+        }
+
+        #endregion
+
+        #region Private methods
+
+        private string PrepareListOfParams(string param, int count)
+        {
+            StringBuilder listOfParams = new StringBuilder();
+            for (int i = 0; i < count; i++)
+            {
+                listOfParams.Append(param);
+                listOfParams.Append(i);
+                if (i < count - 1)
+                    listOfParams.Append(", ");
+            }
+
+            return listOfParams.ToString();
+        }
+
+        private string PrepareReadManySQL(int count)
+        {
+            return String.Format(SelectManyQuery, _valueColumn, _tableName, _keyColumn, PrepareListOfParams(KeyParam, count));
+        }
+
+        private string PrepareRemoveManySQL(int count)
+        {
+            return String.Format(DeleteManyQuery, _tableName, _keyColumn, PrepareListOfParams(KeyParam, count));
+        }
+
+        private string PrepareWriteManySQL(int count)
+        {
+            StringBuilder keys = new StringBuilder();
+            StringBuilder valuesToInsert = new StringBuilder();
+            for (int i = 0; i < count; i++)
+            {
+                keys.Append(KeyToDelParam);
+                keys.Append(i);
+                if (i < count - 1)
+                    keys.Append(", ");
+
+                valuesToInsert.Append("(");
+                valuesToInsert.Append(KeyParam);
+                valuesToInsert.Append(i);
+                valuesToInsert.Append(", ");
+                valuesToInsert.Append(ValueParam);
+                valuesToInsert.Append(i);
+                valuesToInsert.Append(")");
+                if (i < count - 1)
+                    valuesToInsert.Append(", ");
+            }
+
+            return String.Format(UpdateManyQuery, _tableName, _keyColumn, _valueColumn, keys.ToString(), valuesToInsert.ToString());
         }
 
         #endregion
@@ -239,20 +288,6 @@ namespace WKFramework.Settings
                 });
 
             return result;
-        }
-
-        private string PrepareReadManySQL(int count)
-        {
-            StringBuilder listOfParams = new StringBuilder();
-            for (int i = 0; i < count; i++)
-            {
-                listOfParams.Append(KeyParam);
-                listOfParams.Append(i);
-                if (i < count - 1)
-                    listOfParams.Append(", ");
-            }
-
-            return String.Format(SelectManyQuery, _valueColumn, _tableName, _keyColumn, listOfParams.ToString());
         }
 
         public IDictionary<TKey, object> ReadMany(IEnumerable<TKey> keys)
@@ -333,31 +368,6 @@ namespace WKFramework.Settings
             return affectedRows > 0;
         }
 
-        private string PrepareWriteManySQL(int count)
-        {
-            StringBuilder keys = new StringBuilder();
-            StringBuilder valuesToInsert = new StringBuilder();
-            for (int i = 0; i < count; i++)
-            {
-                keys.Append(KeyToDelParam);
-                keys.Append(i);
-                if (i < count - 1)
-                    keys.Append(", ");
-
-                valuesToInsert.Append("(");
-                valuesToInsert.Append(KeyParam);
-                valuesToInsert.Append(i);
-                valuesToInsert.Append(", ");
-                valuesToInsert.Append(ValueParam);
-                valuesToInsert.Append(i);
-                valuesToInsert.Append(")");
-                if (i < count - 1)
-                    valuesToInsert.Append(", ");
-            }
-
-            return String.Format(UpdateManyQuery, _tableName, _keyColumn, _valueColumn, keys.ToString(), valuesToInsert.ToString());
-        }
-
         public bool WriteMany(IDictionary<TKey, object> values)
         {
             if (values.Count() == 0)
@@ -391,20 +401,6 @@ namespace WKFramework.Settings
             });
 
             return affectedRows > 0;
-        }
-
-        private string PrepareRemoveManySQL(int count)
-        {
-            StringBuilder listOfParams = new StringBuilder();
-            for (int i = 0; i < count; i++)
-            {
-                listOfParams.Append(KeyParam);
-                listOfParams.Append(i);
-                if (i < count - 1)
-                    listOfParams.Append(", ");
-            }
-
-            return String.Format(DeleteManyQuery, _tableName, _keyColumn, listOfParams.ToString());
         }
 
         public bool RemoveMany(IEnumerable<TKey> keys)

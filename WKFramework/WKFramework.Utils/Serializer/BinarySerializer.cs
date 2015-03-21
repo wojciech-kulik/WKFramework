@@ -13,25 +13,14 @@ namespace WKFramework.Utils.Serializer
             using (var stream = new MemoryStream())
             {
                 new BinaryFormatter().Serialize(stream, obj);
-                stream.Seek(0, SeekOrigin.Begin);
-
-                var bytes = new byte[stream.Length];
-                int read = stream.Read(bytes, 0, (int)stream.Length);
-
-                if (read != stream.Length)
-                    throw new InvalidOperationException("Couldn't serialize whole object.");
-
-                return bytes;
+                return stream.ToArray();
             }
         }
 
         public override TResult Deserialize<TResult>(byte[] data)
         {
-            using (var stream = new MemoryStream())
+            using (var stream = new MemoryStream(data))
             {
-                stream.Write(data, 0, data.Length);
-                stream.Seek(0, SeekOrigin.Begin);
-
                 return (TResult)new BinaryFormatter().Deserialize(stream);
             }
         }
