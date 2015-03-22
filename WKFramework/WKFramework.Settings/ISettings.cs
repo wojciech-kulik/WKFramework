@@ -30,6 +30,8 @@ namespace WKFramework.Settings
 
         void RemoveAll();
 
+        void RemoveProperties(object obj);
+
         void LoadProperties(object destination);
 
         bool SaveProperties(object source);

@@ -12,7 +12,7 @@ namespace WKFramework.Settings
 {
     public class MsSqlServerSettings<TKey> : ISettings<TKey>
     {
-        public const int MaxKeyLength = 50;
+        public const int MaxKeyLength = 60;
 
         protected readonly string _tableName;
         protected readonly string _keyColumn = "optionName";
@@ -80,7 +80,7 @@ namespace WKFramework.Settings
 
         private const string CreateTableQuery = "IF NOT EXISTS(SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = '{0}') \r\n" +
                                                 "   CREATE TABLE [{0}] ( \r\n" +
-                                                "       {1} nvarchar(50) NOT NULL, \r\n" +
+                                                "       {1} nvarchar({5}) NOT NULL, \r\n" +
                                                 "       {2} {3}{4}, \r\n" +
                                                 "       UNIQUE({1}) \r\n" +
                                                 "    )";
@@ -114,7 +114,8 @@ namespace WKFramework.Settings
         {
             string sql = String.Format(CreateTableQuery,
                             _tableName, _keyColumn, _valueColumn, _valueDbType.ToString(), 
-                            String.IsNullOrEmpty(_valueDbTypeSizeLimit) ? String.Empty : "(" + _valueDbTypeSizeLimit + ")");
+                            String.IsNullOrEmpty(_valueDbTypeSizeLimit) ? String.Empty : "(" + _valueDbTypeSizeLimit + ")",
+                            MaxKeyLength);
             ExecuteCommand(sql);
         }
 
@@ -272,6 +273,11 @@ namespace WKFramework.Settings
         {
             if (keys.Any(x => x == null))
                 throw new ArgumentNullException("key");
+        }
+
+        private string GetKeyFromProperty(PropertyInfo property)
+        {
+            return String.Format("{0}.{1}", property.DeclaringType.Name, property.Name);
         }
 
         #endregion
@@ -461,20 +467,39 @@ namespace WKFramework.Settings
             ExecuteCommand(String.Format(DeleteAllQuery, _tableName));
         }
 
+        public void RemoveProperties(object obj)
+        {
+            if (obj == null)
+                throw new ArgumentNullException("obj");
+
+            var properties = obj.GetType().GetProperties();
+
+            ExecuteCommand(PrepareRemoveManySQL(properties.Count()), command =>
+            {
+                int i = 0;
+                foreach (var prop in properties)
+                {
+                    command.Parameters.AddWithValue(KeyParam + i.ToString(), GetKeyFromProperty(prop));
+                    i++;
+                }
+            });
+        }
+
         public void LoadProperties(object destination)
         {
-            var type = destination.GetType();
-            var properties = type.GetProperties(BindingFlags.Public | BindingFlags.GetProperty | BindingFlags.Instance);
-            var count = properties.Count();
+            if (destination == null)
+                throw new ArgumentNullException("destination");
+
+            var properties = destination.GetType().GetProperties();
 
             ExecuteQuery(
-                PrepareReadManySQL(count),
+                PrepareReadManySQL(properties.Count()),
                 command =>
                 {
                     int i = 0;
                     foreach (var prop in properties)
                     {
-                        command.Parameters.AddWithValue(KeyParam + i.ToString(), prop.Name);
+                        command.Parameters.AddWithValue(KeyParam + i.ToString(), GetKeyFromProperty(prop));
                         i++;
                     }
                 },
@@ -482,7 +507,7 @@ namespace WKFramework.Settings
                 {
                     while (sqlReader.Read())
                     {
-                        var prop = properties.FirstOrDefault(x => x.Name.ToLower() == ((string)sqlReader[0]).ToLower());
+                        var prop = properties.FirstOrDefault(x => GetKeyFromProperty(x) == (string)sqlReader[0]);
                         if (prop != null)
                         {
                             prop.SetValue(destination, ProcessValue<object>(sqlReader[1]));
@@ -493,8 +518,11 @@ namespace WKFramework.Settings
 
         public bool SaveProperties(object source)
         {
+            if (source == null)
+                throw new ArgumentNullException("source");
+
             var type = source.GetType();
-            var properties = type.GetProperties(BindingFlags.Public | BindingFlags.GetProperty | BindingFlags.Instance);
+            var properties = type.GetProperties();
             var count = properties.Count();
 
             int affectedRows = ExecuteCommandInTransaction(PrepareWriteManySQL(count), command =>
@@ -502,8 +530,9 @@ namespace WKFramework.Settings
                 int i = 0;
                 foreach (var prop in properties)
                 {
-                    command.Parameters.AddWithValue(KeyToDelParam + i.ToString(), prop.Name);
-                    command.Parameters.AddWithValue(KeyParam + i.ToString(), prop.Name);
+                    var key = GetKeyFromProperty(prop);
+                    command.Parameters.AddWithValue(KeyToDelParam + i.ToString(), key);
+                    command.Parameters.AddWithValue(KeyParam + i.ToString(), key);
                     AddValueParam(command, ValueParam + i.ToString(), prop.GetValue(source));
                     i++;
                 }

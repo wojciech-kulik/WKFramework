@@ -6,7 +6,12 @@ using System.Threading.Tasks;
 
 namespace WKFramework.UnitTests.SettingsTests.TestClasses
 {
-    public class Person
+    public class BasePerson
+    {
+        public string City { get; set; }
+    }
+
+    public class Person : BasePerson
     {
         public string FirstName { get; set; }
 
@@ -17,5 +22,12 @@ namespace WKFramework.UnitTests.SettingsTests.TestClasses
         public int Height { get; set; }
 
         public string PhoneNumber { get; set; }
+
+        private string Address { get; set; }
+
+        public void SetAddress(string address)
+        {
+            Address = address;
+        }
     }
 }
