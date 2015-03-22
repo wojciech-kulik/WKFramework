@@ -6,6 +6,7 @@ using System.Data.SqlClient;
 using WKFramework.Utils;
 using WKFramework.Utils.Serializer;
 using System.Data;
+using System.Reflection;
 
 namespace WKFramework.Settings
 {
@@ -246,6 +247,33 @@ namespace WKFramework.Settings
             return String.Format(UpdateManyQuery, _tableName, _keyColumn, _valueColumn, keys.ToString(), valuesToInsert.ToString());
         }
 
+        private void AddValueParam(SqlCommand command, string param, object value)
+        {
+            int size = -1;
+            if (!String.IsNullOrEmpty(_valueDbTypeSizeLimit) && !Int32.TryParse(_valueDbTypeSizeLimit, out size))
+                size = -1;
+
+            value = value != null ? _serializer.Serialize(value) : DBNull.Value;
+            command.Parameters.Add(param, _valueDbType, size).Value = value;
+        }
+
+        private TResult ProcessValue<TResult>(object obj)
+        {
+            return obj == null || obj is DBNull ? default(TResult) : (TResult)_serializer.Deserialize(obj);
+        }
+
+        private void ValidateKey(TKey key)
+        {
+            if (key == null)
+                throw new ArgumentNullException("key");
+        }
+
+        private void ValidateKeys(IEnumerable<TKey> keys)
+        {
+            if (keys.Any(x => x == null))
+                throw new ArgumentNullException("key");
+        }
+
         #endregion
 
         protected string ConvertKey(TKey key)
@@ -271,6 +299,8 @@ namespace WKFramework.Settings
 
         public TValue ReadValue<TValue>(TKey key, TValue defaultValue = default(TValue))
         {
+            ValidateKey(key);
+
             TValue result = defaultValue;
             string sql = String.Format(SelectQuery, _valueColumn, _tableName, _keyColumn);
 
@@ -283,7 +313,7 @@ namespace WKFramework.Settings
                 {
                     if (sqlReader.Read())
                     {
-                        result = (TValue)_serializer.Deserialize(sqlReader[0]);
+                        result = ProcessValue<TValue>(sqlReader[0]);
                     }
                 });
 
@@ -297,6 +327,7 @@ namespace WKFramework.Settings
 
         public IDictionary<TKey, TValue> ReadMany<TValue>(IEnumerable<TKey> keys)
         {
+            ValidateKeys(keys);
             if (keys.Count() == 0)
                 return new Dictionary<TKey, TValue>();
 
@@ -323,7 +354,7 @@ namespace WKFramework.Settings
                     while (sqlReader.Read())
                     {
                         var key = keysDictionary[(string)sqlReader[0]];
-                        var value = (TValue)_serializer.Deserialize(sqlReader[1]);
+                        var value = ProcessValue<TValue>(sqlReader[1]);
                         result.Add(key, value);
                     }
                 });
@@ -347,7 +378,7 @@ namespace WKFramework.Settings
                     while (sqlReader.Read())
                     {
                         var key = (string)sqlReader[0];
-                        var value = (TValue)_serializer.Deserialize(sqlReader[1]);
+                        var value = ProcessValue<TValue>(sqlReader[1]);
                         result.Add(key, value);
                     }
                 });
@@ -357,12 +388,13 @@ namespace WKFramework.Settings
 
         public bool WriteValue(TKey key, object value)
         {
+            ValidateKey(key);
             string commandSql = String.Format(UpdateQuery, _tableName, _keyColumn, _valueColumn);
 
             int affectedRows = ExecuteCommandInTransaction(commandSql, command =>
                 {
                     command.Parameters.AddWithValue(KeyParam, ConvertKey(key));
-                    command.Parameters.AddWithValue(ValueParam, _serializer.Serialize(value));
+                    AddValueParam(command, ValueParam, value);
                 });
 
             return affectedRows > 0;
@@ -370,6 +402,7 @@ namespace WKFramework.Settings
 
         public bool WriteMany(IDictionary<TKey, object> values)
         {
+            ValidateKeys(values.Keys);
             if (values.Count() == 0)
                 return true;
 
@@ -382,7 +415,7 @@ namespace WKFramework.Settings
                 {
                     command.Parameters.AddWithValue(KeyToDelParam + i.ToString(), ConvertKey(item.Key));
                     command.Parameters.AddWithValue(KeyParam + i.ToString(), ConvertKey(item.Key));
-                    command.Parameters.AddWithValue(ValueParam + i.ToString(), _serializer.Serialize(item.Value));
+                    AddValueParam(command, ValueParam + i.ToString(), item.Value);
 
                     i++;
                 }
@@ -393,6 +426,7 @@ namespace WKFramework.Settings
 
         public bool RemoveValue(TKey key)
         {
+            ValidateKey(key);
             string commandSql = String.Format(DeleteQuery, _tableName, _keyColumn);
 
             int affectedRows = ExecuteCommand(commandSql, command =>
@@ -405,6 +439,7 @@ namespace WKFramework.Settings
 
         public bool RemoveMany(IEnumerable<TKey> keys)
         {
+            ValidateKeys(keys);
             if (keys.Count() == 0)
                 return true;
 
@@ -424,6 +459,57 @@ namespace WKFramework.Settings
         public void RemoveAll()
         {
             ExecuteCommand(String.Format(DeleteAllQuery, _tableName));
+        }
+
+        public void LoadProperties(object destination)
+        {
+            var type = destination.GetType();
+            var properties = type.GetProperties(BindingFlags.Public | BindingFlags.GetProperty | BindingFlags.Instance);
+            var count = properties.Count();
+
+            ExecuteQuery(
+                PrepareReadManySQL(count),
+                command =>
+                {
+                    int i = 0;
+                    foreach (var prop in properties)
+                    {
+                        command.Parameters.AddWithValue(KeyParam + i.ToString(), prop.Name);
+                        i++;
+                    }
+                },
+                sqlReader =>
+                {
+                    while (sqlReader.Read())
+                    {
+                        var prop = properties.FirstOrDefault(x => x.Name.ToLower() == ((string)sqlReader[0]).ToLower());
+                        if (prop != null)
+                        {
+                            prop.SetValue(destination, ProcessValue<object>(sqlReader[1]));
+                        }
+                    }
+                });
+        }
+
+        public bool SaveProperties(object source)
+        {
+            var type = source.GetType();
+            var properties = type.GetProperties(BindingFlags.Public | BindingFlags.GetProperty | BindingFlags.Instance);
+            var count = properties.Count();
+
+            int affectedRows = ExecuteCommandInTransaction(PrepareWriteManySQL(count), command =>
+            {
+                int i = 0;
+                foreach (var prop in properties)
+                {
+                    command.Parameters.AddWithValue(KeyToDelParam + i.ToString(), prop.Name);
+                    command.Parameters.AddWithValue(KeyParam + i.ToString(), prop.Name);
+                    AddValueParam(command, ValueParam + i.ToString(), prop.GetValue(source));
+                    i++;
+                }
+            });
+
+            return affectedRows == count;
         }
     }
 }

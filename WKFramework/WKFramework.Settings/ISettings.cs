@@ -30,6 +30,10 @@ namespace WKFramework.Settings
 
         void RemoveAll();
 
+        void LoadProperties(object destination);
+
+        bool SaveProperties(object source);
+
         void SetKeyConversion(Func<TKey, string> conversion);
     }
 }

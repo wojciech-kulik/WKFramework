@@ -51,8 +51,10 @@
     </Otherwise>
   </Choose>
   <ItemGroup>
+    <Compile Include="Helpers\AssertExt.cs" />
     <Compile Include="SettingsTests\MsSqlServerSettingsTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="SettingsTests\TestClasses\Person.cs" />
     <Compile Include="SettingsTests\TestClasses\TestEnums.cs" />
     <Compile Include="SettingsTests\TestClasses\ToStringSerializer.cs" />
   </ItemGroup>

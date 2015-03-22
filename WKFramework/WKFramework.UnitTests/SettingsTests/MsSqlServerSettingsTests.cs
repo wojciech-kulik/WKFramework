@@ -5,6 +5,7 @@ using WKFramework.UnitTests.SettingsTests.TestClasses;
 using System.Data.SqlClient;
 using WKFramework.Utils;
 using System.Collections.Generic;
+using WKFramework.UnitTests.Helpers;
 
 namespace WKFramework.UnitTests.SettingsTests
 {
@@ -243,6 +244,79 @@ namespace WKFramework.UnitTests.SettingsTests
 
             Assert.IsTrue(settings.RemoveValue(TestKeyEnum.Key1));
             Assert.AreEqual(1, settings.ReadAll().Count);
+        }
+
+        [TestMethod]
+        public void LoadPropertiesTest()
+        {
+            var settings = new MsSqlServerSettings<string>(_connectionString, _tableName, _dbName);
+
+            settings.WriteValue("FirstName", "John");
+            settings.WriteValue("LastName", "Smith");
+            settings.WriteValue("DateOfBirth", new DateTime(1990, 06, 05));
+            settings.WriteValue("Height", 175);
+
+            var person = new Person();
+            settings.LoadProperties(person);
+
+            Assert.AreEqual("John", person.FirstName);
+            Assert.AreEqual("Smith", person.LastName);
+            Assert.AreEqual(new DateTime(1990, 06, 05), person.DateOfBirth);
+            Assert.AreEqual(175, person.Height);
+            Assert.IsNull(person.PhoneNumber);
+        }
+
+        [TestMethod]
+        public void SavePropertiesTest()
+        {
+            var settings = new MsSqlServerSettings<string>(_connectionString, _tableName, _dbName);
+
+            var person = new Person()
+            {
+                FirstName = "John",
+                LastName = "Smith",
+                DateOfBirth = new DateTime(1990, 06, 05),
+                Height = 175,
+            };
+            Assert.IsTrue(settings.SaveProperties(person));
+
+            var loadedPerson = new Person();
+            settings.LoadProperties(loadedPerson);
+
+            Assert.AreEqual(person.FirstName, loadedPerson.FirstName);
+            Assert.AreEqual(person.LastName, loadedPerson.LastName);
+            Assert.AreEqual(person.DateOfBirth, loadedPerson.DateOfBirth);
+            Assert.AreEqual(person.Height, loadedPerson.Height);
+            Assert.AreEqual(person.PhoneNumber, loadedPerson.PhoneNumber);
+        }
+
+        [TestMethod]
+        public void NullTest()
+        {
+            var settings = new MsSqlServerSettings<string>(_connectionString, _tableName, _dbName);
+
+            settings.WriteValue("Key1", null);
+            Assert.IsNull(settings.ReadValue<string>("Key1", "default"));
+
+            settings.WriteValue("Key1", "test");
+            Assert.AreEqual("test", settings.ReadValue<string>("Key1", "default"));
+            settings.WriteValue("Key1", null);
+            Assert.IsNull(settings.ReadValue<string>("Key1", "default"));
+
+            AssertExt.ThrowsException<ArgumentNullException>(() => settings.WriteValue(null, "test"));
+            AssertExt.ThrowsException<ArgumentNullException>(() => settings.WriteMany(new Dictionary<string, object>() { { "Key1", "test" }, { null, "test" } }));
+            AssertExt.ThrowsException<ArgumentNullException>(() => settings.RemoveValue(null));
+            AssertExt.ThrowsException<ArgumentNullException>(() => settings.RemoveMany(new string[] { "Key1", null }));
+        }
+
+        [TestMethod]
+        public void EmptyKeyStringTest()
+        {
+            var settings = new MsSqlServerSettings<string>(_connectionString, _tableName, _dbName);
+            Assert.IsTrue(settings.WriteValue(String.Empty, "test"));
+            Assert.AreEqual("test", settings.ReadValue<string>(String.Empty));
+            Assert.IsTrue(settings.RemoveValue(String.Empty));
+            Assert.IsNull(settings.ReadValue<string>(String.Empty));
         }
     }
 }
