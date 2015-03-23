@@ -11,119 +11,82 @@ using WKFramework.UnitTests.SettingsTests.TestClasses;
 namespace WKFramework.UnitTests.SettingsTests
 {
     [TestClass]
-    public class FileSettingsTests
+    public class FileSettingsTests : CommonSettingsTests
     {
-        private FileSettings<TestKeyEnum> CreateSettingsAndFill()
-        {
-            var settings = new FileSettings<TestKeyEnum>("settings.dat");
-            FillSettings(settings);
-            return settings;
-        }
+        private string _filePath = "settings.dat";
 
-        private void FillSettings(FileSettings<TestKeyEnum> settings)
+        protected override ISettings CreateSimpleSettings()
         {
-            settings.WriteValue(TestKeyEnum.Key1, "value1");
-            settings.WriteValue(TestKeyEnum.Key2, TestValueEnum.Value2);
-            settings.WriteValue(TestKeyEnum.Key3, TestValueEnum.Value3);
+            return new FileSettings(_filePath);
         }
 
         [TestInitialize]
         public void TestInitialize()
         {
-            File.Delete("settings.dat");
+            File.Delete(_filePath);
         }
 
         [TestMethod]
-        public void FileSettings_WriteReadStringAsKey()
+        public void ShouldBeCopied()
         {
-            var settings = new FileSettings<string>("settings.dat");
-
-            settings.WriteValue("option1", "value1");
-            settings.WriteValue("option2", TestValueEnum.Value2);
-
-            Assert.AreEqual("value1", settings.ReadValue<string>("option1"));
-            Assert.AreEqual(TestValueEnum.Value2, settings.ReadValue<TestValueEnum>("option2"));
-        }
-
-        [TestMethod]
-        public void FileSettings_WriteReadEnumAsKey()
-        {
-            var settings = new FileSettings<TestKeyEnum>("settings.dat");
+            var settings = CreateSimpleSettings();
 
             settings.WriteValue(TestKeyEnum.Key1, "value1");
-            settings.WriteValue(TestKeyEnum.Key2, TestValueEnum.Value2);
+            Assert.AreNotSame(settings.ReadValue(TestKeyEnum.Key1), settings.ReadValue(TestKeyEnum.Key1));
 
-            Assert.AreEqual("value1", settings.ReadValue<string>(TestKeyEnum.Key1));
-            Assert.AreEqual(TestValueEnum.Value2, settings.ReadValue<TestValueEnum>(TestKeyEnum.Key2));
+            var person = new Person()
+            {
+                FirstName = "John",
+                LastName = "Smith",
+                DateOfBirth = new DateTime(1990, 06, 05),
+                Height = 175,
+                City = "Los Santos",
+                Car = new Car() { Model = "model", Year = new DateTime(2010, 02, 03) }
+            };
+            settings.WriteValue(TestKeyEnum.Key2, person);
+
+            var person1 = settings.ReadValue<Person>(TestKeyEnum.Key2);
+            var person2 = settings.ReadValue<Person>(TestKeyEnum.Key2);
+            Assert.AreNotSame(person1, person2);
+            Assert.AreNotSame(person1.Car, person2.Car);
+
+            Assert.AreEqual(person1.Car.Model, person2.Car.Model);
+            Assert.AreEqual(person1.City, person2.City);
+            person1.Car.Model = "changed";
+            person2.City = "Las Vegas";
+            Assert.AreNotEqual(person1.Car.Model, person2.Car.Model);
+            Assert.AreNotEqual(person1.City, person2.City);
         }
 
         [TestMethod]
-        public void FileSettings_WriteMany()
+        public void KeyConvertionAsNull()
         {
-            var settings = new FileSettings<TestKeyEnum>("settings.dat");
+            var settings = CreateSimpleSettings();
+            settings.SetKeyConversion(null);
+            FillSettings(settings);
 
-            settings.WriteMany(new Dictionary<TestKeyEnum, object>() 
-            { 
-                { TestKeyEnum.Key1, "value1" },
-                { TestKeyEnum.Key3, TestValueEnum.Value3 }
-            });
-
-            var result = settings.ReadMany(new TestKeyEnum[] { TestKeyEnum.Key1, TestKeyEnum.Key2, TestKeyEnum.Key3, TestKeyEnum.Key4 });
-            Assert.AreEqual(2, result.Count);
-            Assert.AreEqual("value1", result[TestKeyEnum.Key1]);
-            Assert.AreEqual(TestValueEnum.Value3, result[TestKeyEnum.Key3]);
+            var options = settings.ReadAll();
+            Assert.IsTrue(options.ContainsKey(TestKeyEnum.Key1));
+            Assert.IsTrue(options.ContainsKey(TestKeyEnum.Key2));
+            Assert.IsTrue(options.ContainsKey(TestKeyEnum.Key3));
         }
 
         [TestMethod]
-        public void FileSettings_ReadMany()
+        public void Load()
         {
-            var settings = CreateSettingsAndFill();
+            CreateSettingsAndFill();
+            var settings = (FileSettings)CreateSimpleSettings();            
 
-            var result = settings.ReadMany(new TestKeyEnum[] { TestKeyEnum.Key2, TestKeyEnum.Key3 });
-            Assert.AreEqual(2, result.Count);
-            Assert.AreEqual(TestValueEnum.Value2, result[TestKeyEnum.Key2]);
-            Assert.AreEqual(TestValueEnum.Value3, result[TestKeyEnum.Key3]);
+            Assert.AreEqual("value1", settings.ReadValue(TestKeyEnum.Key1));
+            Assert.AreEqual(TestValueEnum.Value2, settings.ReadValue(TestKeyEnum.Key2));
+            Assert.AreEqual(TestValueEnum.Value3, settings.ReadValue(TestKeyEnum.Key3));
 
-            result = settings.ReadMany(new TestKeyEnum[] { TestKeyEnum.Key1, TestKeyEnum.Key2, TestKeyEnum.Key3 });
-            Assert.AreEqual(3, result.Count);
-            Assert.AreEqual("value1", result[TestKeyEnum.Key1]);
-            Assert.AreEqual(TestValueEnum.Value2, result[TestKeyEnum.Key2]);
-            Assert.AreEqual(TestValueEnum.Value3, result[TestKeyEnum.Key3]);
+            var settings2 = new FileSettings();
+            settings2.Load(_filePath);
 
-            var resultWithType = settings.ReadMany<TestValueEnum>(new TestKeyEnum[] { TestKeyEnum.Key4 });
-            Assert.AreEqual(0, resultWithType.Count);
-
-            resultWithType = settings.ReadMany<TestValueEnum>(new TestKeyEnum[] { TestKeyEnum.Key3, TestKeyEnum.Key4 });
-            Assert.AreEqual(1, resultWithType.Count);
-            Assert.AreEqual(TestValueEnum.Value3, resultWithType[TestKeyEnum.Key3]);
-        }
-
-        [TestMethod]
-        public void FileSettings_ReadAll()
-        {
-            var settings = CreateSettingsAndFill();
-
-            var result = settings.ReadAll();
-            Assert.AreEqual(3, result.Count);
-            Assert.AreEqual(result[TestKeyEnum.Key1.ToString()], "value1");
-            Assert.AreEqual(result[TestKeyEnum.Key2.ToString()], TestValueEnum.Value2);
-            Assert.AreEqual(result[TestKeyEnum.Key3.ToString()], TestValueEnum.Value3);
-
-            settings.RemoveAll();
-            Assert.AreEqual(0, settings.ReadAll().Count);
-        }
-
-        [TestMethod]
-        public void FileSettings_ReadDefaultValue()
-        {
-            var settings = new FileSettings<TestKeyEnum>("settings.dat");
-            settings.WriteValue(TestKeyEnum.Key1, "value1");
-
-            Assert.IsNull(settings.ReadValue<string>(TestKeyEnum.Key2));
-            Assert.AreEqual("unavailable", settings.ReadValue(TestKeyEnum.Key2, "unavailable"));
-
-            Assert.AreEqual(0, settings.ReadValue<int>(TestKeyEnum.Key2));
-            Assert.AreEqual(-1, settings.ReadValue<int>(TestKeyEnum.Key2, -1));
+            Assert.AreEqual("value1", settings2.ReadValue(TestKeyEnum.Key1));
+            Assert.AreEqual(TestValueEnum.Value2, settings2.ReadValue(TestKeyEnum.Key2));
+            Assert.AreEqual(TestValueEnum.Value3, settings2.ReadValue(TestKeyEnum.Key3));
         }
     }
 }

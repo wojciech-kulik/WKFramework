@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -6,27 +7,27 @@ using System.Threading.Tasks;
 
 namespace WKFramework.Settings
 {
-    public interface ISettings<TKey>
+    public interface ISettings
     {
-        object ReadValue(TKey key, object defaultValue = null);
+        object ReadValue(object key, object defaultValue = null);
 
-        TValue ReadValue<TValue>(TKey key, TValue defaultValue = default(TValue));
+        TValue ReadValue<TValue>(object key, TValue defaultValue = default(TValue));
 
-        IDictionary<TKey, object> ReadMany(IEnumerable<TKey> keys);
+        IDictionary<object, object> ReadMany(ICollection keys);
 
-        IDictionary<TKey, TValue> ReadMany<TValue>(IEnumerable<TKey> keys);
+        IDictionary<object, TValue> ReadMany<TValue>(ICollection keys);
 
-        IDictionary<string, object> ReadAll();
+        IDictionary<object, object> ReadAll();
 
-        IDictionary<string, TValue> ReadAll<TValue>();
+        IDictionary<object, TValue> ReadAll<TValue>();
 
-        bool WriteValue(TKey key, object value);
+        bool WriteValue(object key, object value);
 
-        bool WriteMany(IDictionary<TKey, object> values);
+        bool WriteMany(IDictionary<object, object> values);
 
-        bool RemoveValue(TKey key);
+        bool Remove(object key);
 
-        bool RemoveMany(IEnumerable<TKey> keys);
+        bool RemoveMany(ICollection keys);
 
         void RemoveAll();
 
@@ -36,6 +37,6 @@ namespace WKFramework.Settings
 
         bool SaveProperties(object source);
 
-        void SetKeyConversion(Func<TKey, string> conversion);
+        void SetKeyConversion(Func<object, object> conversion);
     }
 }

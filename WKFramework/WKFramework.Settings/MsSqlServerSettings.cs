@@ -7,10 +7,11 @@ using WKFramework.Utils;
 using WKFramework.Utils.Serializer;
 using System.Data;
 using System.Reflection;
+using System.Collections;
 
 namespace WKFramework.Settings
 {
-    public class MsSqlServerSettings<TKey> : ISettings<TKey>
+    public class MsSqlServerSettings : ISettings
     {
         public const int MaxKeyLength = 60;
 
@@ -24,7 +25,7 @@ namespace WKFramework.Settings
         protected string _connectionString;
         
         protected ISerializer _serializer = new BinarySerializer();
-        protected Func<TKey, string> _keyConversion = x => x.ToString();
+        protected Func<object, object> _keyConversion = x => x.ToString();
 
         public MsSqlServerSettings(string connectionString, string tableName, string dbName = null)
         {
@@ -263,16 +264,19 @@ namespace WKFramework.Settings
             return obj == null || obj is DBNull ? default(TResult) : (TResult)_serializer.Deserialize(obj);
         }
 
-        private void ValidateKey(TKey key)
+        private void ValidateKey(object key)
         {
             if (key == null)
                 throw new ArgumentNullException("key");
         }
 
-        private void ValidateKeys(IEnumerable<TKey> keys)
+        private void ValidateKeys(IEnumerable keys)
         {
-            if (keys.Any(x => x == null))
-                throw new ArgumentNullException("key");
+            foreach (var key in keys)
+            {
+                if (key == null)
+                    throw new ArgumentNullException("key");
+            }
         }
 
         private string GetKeyFromProperty(PropertyInfo property)
@@ -282,9 +286,13 @@ namespace WKFramework.Settings
 
         #endregion
 
-        protected string ConvertKey(TKey key)
+        protected object ConvertKey(object key)
         {
-            var strKey = _keyConversion(key);
+            var strKey = _keyConversion(key) as string;
+            if (strKey == null)
+            {
+                throw new InvalidOperationException("Key conversion must return a string.");
+            }
             if (strKey.Length > MaxKeyLength)
             {
                 throw new ArgumentOutOfRangeException("key", String.Format("Key cannot be longer than {0} characters. Default key conversion invokes ToString.", MaxKeyLength));
@@ -293,17 +301,17 @@ namespace WKFramework.Settings
             return strKey;
         }
 
-        public void SetKeyConversion(Func<TKey, string> conversion)
+        public void SetKeyConversion(Func<object, object> conversion)
         {
             _keyConversion = conversion ?? (x => x.ToString());
         }
 
-        public object ReadValue(TKey key, object defaultValue = null)
+        public object ReadValue(object key, object defaultValue = null)
         {
             return ReadValue<object>(key, defaultValue);
         }
 
-        public TValue ReadValue<TValue>(TKey key, TValue defaultValue = default(TValue))
+        public TValue ReadValue<TValue>(object key, TValue defaultValue = default(TValue))
         {
             ValidateKey(key);
 
@@ -326,26 +334,26 @@ namespace WKFramework.Settings
             return result;
         }
 
-        public IDictionary<TKey, object> ReadMany(IEnumerable<TKey> keys)
+        public IDictionary<object, object> ReadMany(ICollection keys)
         {
             return ReadMany<object>(keys);
         }
 
-        public IDictionary<TKey, TValue> ReadMany<TValue>(IEnumerable<TKey> keys)
+        public IDictionary<object, TValue> ReadMany<TValue>(ICollection keys)
         {
             ValidateKeys(keys);
-            if (keys.Count() == 0)
-                return new Dictionary<TKey, TValue>();
+            if (keys.Count == 0)
+                return new Dictionary<object, TValue>();
 
-            var result = new Dictionary<TKey, TValue>();
-            var keysDictionary = new Dictionary<string, TKey>();
+            var result = new Dictionary<object, TValue>();
+            var keysDictionary = new Dictionary<object, object>();
             foreach (var key in keys)
             {
                 keysDictionary.Add(ConvertKey(key), key);
             }
 
             ExecuteQuery(
-                PrepareReadManySQL(keys.Count()),
+                PrepareReadManySQL(keys.Count),
                 command =>
                 {
                     int i = 0;
@@ -368,14 +376,14 @@ namespace WKFramework.Settings
             return result;
         }
 
-        public IDictionary<string, object> ReadAll()
+        public IDictionary<object, object> ReadAll()
         {
             return ReadAll<object>();
         }
 
-        public IDictionary<string, TValue> ReadAll<TValue>()
+        public IDictionary<object, TValue> ReadAll<TValue>()
         {
-            var result = new Dictionary<string, TValue>();
+            var result = new Dictionary<object, TValue>();
             var sql = String.Format(SelectAllQuery, _keyColumn, _valueColumn, _tableName);
 
             ExecuteQuery(sql, null,
@@ -392,7 +400,7 @@ namespace WKFramework.Settings
             return result;
         }
 
-        public bool WriteValue(TKey key, object value)
+        public bool WriteValue(object key, object value)
         {
             ValidateKey(key);
             string commandSql = String.Format(UpdateQuery, _tableName, _keyColumn, _valueColumn);
@@ -406,7 +414,7 @@ namespace WKFramework.Settings
             return affectedRows > 0;
         }
 
-        public bool WriteMany(IDictionary<TKey, object> values)
+        public bool WriteMany(IDictionary<object, object> values)
         {
             ValidateKeys(values.Keys);
             if (values.Count() == 0)
@@ -430,7 +438,7 @@ namespace WKFramework.Settings
             return affectedRows == values.Count;
         }
 
-        public bool RemoveValue(TKey key)
+        public bool Remove(object key)
         {
             ValidateKey(key);
             string commandSql = String.Format(DeleteQuery, _tableName, _keyColumn);
@@ -443,13 +451,13 @@ namespace WKFramework.Settings
             return affectedRows > 0;
         }
 
-        public bool RemoveMany(IEnumerable<TKey> keys)
+        public bool RemoveMany(ICollection keys)
         {
             ValidateKeys(keys);
-            if (keys.Count() == 0)
+            if (keys.Count == 0)
                 return true;
 
-            int affectedRows = ExecuteCommand(PrepareRemoveManySQL(keys.Count()), command =>
+            int affectedRows = ExecuteCommand(PrepareRemoveManySQL(keys.Count), command =>
             {
                 int i = 0;
                 foreach (var key in keys)
@@ -459,7 +467,7 @@ namespace WKFramework.Settings
                 }
             });
 
-            return affectedRows == keys.Count();
+            return affectedRows == keys.Count;
         }
 
         public void RemoveAll()
@@ -521,8 +529,7 @@ namespace WKFramework.Settings
             if (source == null)
                 throw new ArgumentNullException("source");
 
-            var type = source.GetType();
-            var properties = type.GetProperties();
+            var properties = source.GetType().GetProperties();
             var count = properties.Count();
 
             int affectedRows = ExecuteCommandInTransaction(PrepareWriteManySQL(count), command =>

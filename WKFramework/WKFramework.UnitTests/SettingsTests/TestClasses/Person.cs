@@ -25,11 +25,21 @@ namespace WKFramework.UnitTests.SettingsTests.TestClasses
 
         public string PhoneNumber { get; set; }
 
+        public Car Car { get; set; }
+
         private string Address { get; set; }
 
         public void SetAddress(string address)
         {
             Address = address;
         }
+    }
+
+    [Serializable]
+    public class Car
+    {
+        public string Model { get; set; }
+
+        public DateTime Year { get; set; }
     }
 }

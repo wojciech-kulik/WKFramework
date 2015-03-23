@@ -1,20 +1,25 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using WKFramework.Utils.Serializer;
 
 namespace WKFramework.Settings
 {
-    public class FileSettings<TKey> : ISettings<TKey>
+    public class FileSettings : ISettings
     {
         protected string _filePath;
         protected ISerializer<byte[]> _serializer = new BinarySerializer();
-        protected Dictionary<TKey, object> _settings = new Dictionary<TKey, object>();
+        protected Dictionary<object, object> _settings = new Dictionary<object, object>();
+        protected Func<object, object> _keyConversion = x => x;
 
         public bool AutoSave { get; set; }
+
+        #region Constructors
 
         public FileSettings()
         {
@@ -34,10 +39,50 @@ namespace WKFramework.Settings
             Load(filePath);
         }
 
+        #endregion
+
+        #region Private methods
+
         private void TryAutoSave()
         {
             if (AutoSave)
                 Save();
+        }
+
+        private string GetKeyFromProperty(PropertyInfo property)
+        {
+            return String.Format("{0}.{1}", property.DeclaringType.Name, property.Name);
+        }
+
+        private void ForEachProperty(object obj, Action<PropertyInfo> action)
+        {
+            var properties = obj.GetType().GetProperties();
+            foreach (var prop in properties)
+            {
+                action(prop);
+            }
+        }
+
+        private void ValidateKey(object key)
+        {
+            if (key == null)
+                throw new ArgumentNullException("key");
+        }
+
+        private void ValidateKeys(IEnumerable keys)
+        {
+            foreach (var key in keys)
+            {
+                if (key == null)
+                    throw new ArgumentNullException("key");
+            }
+        }
+
+        #endregion
+
+        public void SetKeyConversion(Func<object, object> conversion)
+        {
+            _keyConversion = conversion ?? (x => x);
         }
 
         public void Save()
@@ -52,71 +97,77 @@ namespace WKFramework.Settings
 
             if (!File.Exists(filePath))
             {
-                _settings = new Dictionary<TKey, object>();
+                _settings = new Dictionary<object, object>();
                 return false;
             }
 
             var bytes = File.ReadAllBytes(filePath);
-            _settings = _serializer.Deserialize<Dictionary<TKey, object>>(bytes);
+            _settings = _serializer.Deserialize<Dictionary<object, object>>(bytes);
 
             return true;
         }
 
-        public object ReadValue(TKey key, object defaultValue = null)
+        public object ReadValue(object key, object defaultValue = null)
         {
             return ReadValue<object>(key, defaultValue);
         }
 
-        public TValue ReadValue<TValue>(TKey key, TValue defaultValue = default(TValue))
+        public TValue ReadValue<TValue>(object key, TValue defaultValue = default(TValue))
         {
-            if (key == null)
-                throw new ArgumentNullException("key");
+            ValidateKey(key);
+            key = _keyConversion(key);
+
             if (!_settings.ContainsKey(key))
                 return defaultValue;
 
             return (TValue)_settings[key].DeepClone();
         }
 
-        public IDictionary<TKey, object> ReadMany(IEnumerable<TKey> keys)
+        public IDictionary<object, object> ReadMany(ICollection keys)
         {
             return ReadMany<object>(keys);
         }
 
-        public IDictionary<TKey, TValue> ReadMany<TValue>(IEnumerable<TKey> keys)
+        public IDictionary<object, TValue> ReadMany<TValue>(ICollection keys)
         {
-            var result = new Dictionary<TKey, TValue>();
+            ValidateKeys(keys);
+
+            var result = new Dictionary<object, TValue>();
             foreach(var key in keys)
             {
-                if (_settings.ContainsKey(key))
+                if (_settings.ContainsKey(_keyConversion(key)))
                     result.Add(key, ReadValue<TValue>(key));
             }
 
             return result;
         }
 
-        public IDictionary<string, object> ReadAll()
+        public IDictionary<object, object> ReadAll()
         {
             return ReadAll<object>();
         }
 
-        public IDictionary<string, TValue> ReadAll<TValue>()
+        public IDictionary<object, TValue> ReadAll<TValue>()
         {
-            var result = new Dictionary<string, TValue>();
+            var result = new Dictionary<object, TValue>();
             foreach (var key in _settings.Keys)
             {
-                result.Add(key.ToString(), (TValue)_settings[key].DeepClone());
+                result.Add(key, (TValue)_settings[key].DeepClone());
             }
             return result;
         }
 
-        public bool WriteValue(TKey key, object value)
+        public bool WriteValue(object key, object value)
         {
+            ValidateKey(key);
+
+            key = _keyConversion(key);
             _settings[key] = value;
             TryAutoSave();
             return true;
         }
 
-        public bool WriteMany(IDictionary<TKey, object> values)
+        public bool WriteMany(IDictionary<object, object> values)
         {
             foreach (var key in values.Keys)
             {
@@ -125,14 +176,33 @@ namespace WKFramework.Settings
             return true;
         }
 
-        public bool RemoveValue(TKey key)
+        public bool Remove(object key)
         {
-            throw new NotImplementedException();
+            ValidateKey(key);
+
+            key = _keyConversion(key);
+            if (!_settings.ContainsKey(key))
+                return false;
+
+            bool result = _settings.Remove(key);
+            TryAutoSave();
+
+            return result;
         }
 
-        public bool RemoveMany(IEnumerable<TKey> keys)
+        public bool RemoveMany(ICollection keys)
         {
-            throw new NotImplementedException();
+            ValidateKeys(keys);
+
+            bool result = true;
+            foreach (var key in keys)
+            {
+                if (!Remove(key))
+                    result = false;
+            }
+
+            TryAutoSave();
+            return result;
         }
 
         public void RemoveAll()
@@ -143,22 +213,39 @@ namespace WKFramework.Settings
 
         public void RemoveProperties(object obj)
         {
-            throw new NotImplementedException();
+            if (obj == null)
+                throw new ArgumentNullException("obj");
+
+            ForEachProperty(obj, prop => 
+            {
+                var key = GetKeyFromProperty(prop);
+                if (_settings.ContainsKey(key))
+                    _settings.Remove(key);
+            });
+            TryAutoSave();
         }
 
         public void LoadProperties(object destination)
         {
-            throw new NotImplementedException();
+            if (destination == null)
+                throw new ArgumentNullException("destination");
+
+            ForEachProperty(destination, prop =>
+            {
+                var key = GetKeyFromProperty(prop);
+                if (_settings.ContainsKey(key))
+                    prop.SetValue(destination, _settings[key]);
+            });
         }
 
         public bool SaveProperties(object source)
         {
-            throw new NotImplementedException();
-        }
+            if (source == null)
+                throw new ArgumentNullException("source");
 
-        public void SetKeyConversion(Func<TKey, string> conversion)
-        {
-            throw new NotImplementedException();
+            ForEachProperty(source, prop => _settings[GetKeyFromProperty(prop)] = prop.GetValue(source));
+            TryAutoSave();
+            return true;
         }
     }
 }
