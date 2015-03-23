@@ -51,7 +51,7 @@ namespace WKFramework.UnitTests.SettingsTests
         }
 
         [TestMethod]
-        public void WriteReadStringAsKeyTest()
+        public void MsSqlServerSettings_WriteReadStringAsKey()
         {
             var settings = new MsSqlServerSettings<string>(_connectionString, _tableName, _dbName);
 
@@ -63,7 +63,7 @@ namespace WKFramework.UnitTests.SettingsTests
         }
 
         [TestMethod]
-        public void WriteReadEnumAsKeyTest()
+        public void MsSqlServerSettings_WriteReadEnumAsKey()
         {
             var settings = new MsSqlServerSettings<TestKeyEnum>(_connectionString, _tableName, _dbName);
 
@@ -75,7 +75,7 @@ namespace WKFramework.UnitTests.SettingsTests
         }
 
         [TestMethod]
-        public void WriteManyTest()
+        public void MsSqlServerSettings_WriteMany()
         {
             var settings = new MsSqlServerSettings<TestKeyEnum>(_connectionString, _tableName, _dbName);
 
@@ -92,7 +92,7 @@ namespace WKFramework.UnitTests.SettingsTests
         }
 
         [TestMethod]
-        public void ReadManyTest()
+        public void MsSqlServerSettings_ReadMany()
         {
             var settings = CreateSettingsAndFill();
 
@@ -116,7 +116,7 @@ namespace WKFramework.UnitTests.SettingsTests
         }
 
         [TestMethod]
-        public void ReadAllTest()
+        public void MsSqlServerSettings_ReadAll()
         {
             var settings = CreateSettingsAndFill();
 
@@ -131,7 +131,7 @@ namespace WKFramework.UnitTests.SettingsTests
         }
 
         [TestMethod]
-        public void ReadDefaultValueTest()
+        public void MsSqlServerSettings_ReadDefaultValue()
         {
             var settings = new MsSqlServerSettings<TestKeyEnum>(_connectionString, _tableName, _dbName);
             settings.WriteValue(TestKeyEnum.Key1, "value1");
@@ -144,7 +144,7 @@ namespace WKFramework.UnitTests.SettingsTests
         }
 
         [TestMethod]
-        public void RemoveTest()
+        public void MsSqlServerSettings_Remove()
         {
             var settings = CreateSettingsAndFill();
 
@@ -162,7 +162,7 @@ namespace WKFramework.UnitTests.SettingsTests
         }
 
         [TestMethod]
-        public void RemoveManyTest()
+        public void MsSqlServerSettings_RemoveMany()
         {
             var settings = CreateSettingsAndFill();
 
@@ -176,7 +176,7 @@ namespace WKFramework.UnitTests.SettingsTests
         }
 
         [TestMethod]
-        public void RemoveAllTest()
+        public void MsSqlServerSettings_RemoveAll()
         {
             var settings = CreateSettingsAndFill();
 
@@ -186,7 +186,7 @@ namespace WKFramework.UnitTests.SettingsTests
         }
 
         [TestMethod]
-        public void RemoveResultTest()
+        public void MsSqlServerSettings_RemoveResult()
         {
             var settings = CreateSettingsAndFill();
 
@@ -202,7 +202,7 @@ namespace WKFramework.UnitTests.SettingsTests
         }
 
         [TestMethod]
-        public void CustomKeyConversionTest()
+        public void MsSqlServerSettings_CustomKeyConversion()
         {
             var settings = new MsSqlServerSettings<TestKeyEnum>(_connectionString, _tableName, _dbName);
             settings.SetKeyConversion(x => "key_" + x.ToString());
@@ -232,7 +232,7 @@ namespace WKFramework.UnitTests.SettingsTests
         }
 
         [TestMethod]
-        public void CustomValueDBTypeTest()
+        public void MsSqlServerSettings_CustomValueDBType()
         {
             var settings = new MsSqlServerSettings<TestKeyEnum>(_connectionString, _tableName, _dbName, System.Data.SqlDbType.NVarChar, "200", new ToStringSerializer());
 
@@ -247,7 +247,7 @@ namespace WKFramework.UnitTests.SettingsTests
         }
 
         [TestMethod]
-        public void LoadPropertiesTest()
+        public void MsSqlServerSettings_LoadProperties()
         {
             var settings = new MsSqlServerSettings<string>(_connectionString, _tableName, _dbName);
 
@@ -269,7 +269,7 @@ namespace WKFramework.UnitTests.SettingsTests
         }
 
         [TestMethod]
-        public void SavePropertiesTest()
+        public void MsSqlServerSettings_SaveProperties()
         {
             var settings = new MsSqlServerSettings<string>(_connectionString, _tableName, _dbName);
 
@@ -298,7 +298,7 @@ namespace WKFramework.UnitTests.SettingsTests
         }
 
         [TestMethod]
-        public void RemovePropertiesTest()
+        public void MsSqlServerSettings_RemoveProperties()
         {
             var settings = new MsSqlServerSettings<string>(_connectionString, _tableName, _dbName);
 
@@ -321,7 +321,7 @@ namespace WKFramework.UnitTests.SettingsTests
         }
 
         [TestMethod]
-        public void NullTest()
+        public void MsSqlServerSettings_NullAsArgument()
         {
             var settings = new MsSqlServerSettings<string>(_connectionString, _tableName, _dbName);
 
@@ -344,7 +344,7 @@ namespace WKFramework.UnitTests.SettingsTests
         }
 
         [TestMethod]
-        public void EmptyKeyStringTest()
+        public void MsSqlServerSettings_EmptyKeyString()
         {
             var settings = new MsSqlServerSettings<string>(_connectionString, _tableName, _dbName);
             Assert.IsTrue(settings.WriteValue(String.Empty, "test"));
@@ -354,7 +354,7 @@ namespace WKFramework.UnitTests.SettingsTests
         }
 
         [TestMethod]
-        public void SpecialCharactersTest()
+        public void MsSqlServerSettings_SpecialCharacters()
         {
             var settings = new MsSqlServerSettings<string>(_connectionString, _tableName, _dbName);
 
@@ -366,7 +366,7 @@ namespace WKFramework.UnitTests.SettingsTests
         }
 
         [TestMethod]
-        public void ValueUpdateTest()
+        public void MsSqlServerSettings_ValueUpdate()
         {
             var settings = new MsSqlServerSettings<string>(_connectionString, _tableName, _dbName);
 
@@ -384,7 +384,7 @@ namespace WKFramework.UnitTests.SettingsTests
         }
 
         [TestMethod]
-        public void EmptyDBNameTest()
+        public void MsSqlServerSettings_EmptyDBName()
         {
             new MsSqlServerSettings<string>(_connectionString, _tableName, _dbName); //to create DB and table
             AssertExt.ThrowsException<ArgumentException>(() => new MsSqlServerSettings<string>(_connectionString, _tableName)); //no dbName
@@ -394,7 +394,7 @@ namespace WKFramework.UnitTests.SettingsTests
         }
 
         [TestMethod]
-        public void TooLongKeyTest()
+        public void MsSqlServerSettings_TooLongKey()
         {
             var settings = new MsSqlServerSettings<string>(_connectionString, _tableName, _dbName);
 
@@ -406,7 +406,7 @@ namespace WKFramework.UnitTests.SettingsTests
         }
 
         [TestMethod]
-        public void ReadWriteManyEmptyKeysTest()
+        public void MsSqlServerSettings_ReadWriteManyWithEmptyKeys()
         {
             var settings = new MsSqlServerSettings<string>(_connectionString, _tableName, _dbName);
             Assert.AreEqual(0, settings.ReadMany(new List<string>()).Count);
@@ -414,7 +414,7 @@ namespace WKFramework.UnitTests.SettingsTests
         }
 
         [TestMethod]
-        public void RollbackTest()
+        public void MsSqlServerSettings_Rollback()
         {
             var settings = new MsSqlServerSettings<string>(_connectionString, _tableName, _dbName);
             settings.WriteValue("Key", "Value");
@@ -438,11 +438,38 @@ namespace WKFramework.UnitTests.SettingsTests
         }
 
         [TestMethod]
-        public void DbValueTypeNoSizeLimitTest()
+        public void MsSqlServerSettings_DbValueTypeNoSizeLimit()
         {
             var settings = new MsSqlServerSettings<string>(_connectionString, _tableName, _dbName, System.Data.SqlDbType.Int, null, new NoneSerializer());
             settings.WriteValue("Key", 100);
             Assert.AreEqual(100, settings.ReadValue("Key"));
+        }
+
+        [TestMethod]
+        public void MsSqlServerSettings_ClassValue()
+        {
+            var settings = new MsSqlServerSettings<string>(_connectionString, _tableName, _dbName);
+
+            var person = new Person()
+            {
+                FirstName = "John",
+                LastName = "Smith",
+                DateOfBirth = new DateTime(1990, 06, 05),
+                Height = 175,
+                City = "Los Santos"
+            };
+
+            Assert.IsTrue(settings.WriteValue("person", person));
+
+            var loadedPerson = settings.ReadValue<Person>("person");
+            Assert.IsNotNull(loadedPerson);
+
+            Assert.AreEqual(person.FirstName, loadedPerson.FirstName);
+            Assert.AreEqual(person.LastName, loadedPerson.LastName);
+            Assert.AreEqual(person.DateOfBirth, loadedPerson.DateOfBirth);
+            Assert.AreEqual(person.Height, loadedPerson.Height);
+            Assert.AreEqual(person.PhoneNumber, loadedPerson.PhoneNumber);
+            Assert.AreEqual(person.City, loadedPerson.City);
         }
     }
 }

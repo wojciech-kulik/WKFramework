@@ -6,11 +6,13 @@ using System.Threading.Tasks;
 
 namespace WKFramework.UnitTests.SettingsTests.TestClasses
 {
+    [Serializable]
     public class BasePerson
     {
         public string City { get; set; }
     }
 
+    [Serializable]
     public class Person : BasePerson
     {
         public string FirstName { get; set; }
