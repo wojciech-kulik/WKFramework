@@ -8,7 +8,7 @@ namespace WKFramework.Utils.Serializer
 {
     public class BinarySerializer : Serializer<byte[]>
     {
-        public override byte[] Serialize<TSource>(TSource obj)
+        public override byte[] Serialize(object obj)
         {
             if (obj == null)
                 return null;

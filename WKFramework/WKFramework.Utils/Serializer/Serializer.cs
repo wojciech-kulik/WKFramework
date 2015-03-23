@@ -8,16 +8,26 @@ namespace WKFramework.Utils.Serializer
 {
     public abstract class Serializer<TSerialized> : ISerializer<TSerialized>
     {
-        public abstract TSerialized Serialize<TSource>(TSource obj);
+        public abstract TSerialized Serialize(object obj);
 
         public abstract TResult Deserialize<TResult>(TSerialized obj);
 
-        public virtual object Serialize(object obj)
+        TSerialized ISerializer<TSerialized>.Serialize(object obj)
         {
-            return Serialize<object>(obj);
+            return Serialize(obj);
         }
 
-        public virtual object Deserialize(object obj)
+        TResult ISerializer<TSerialized>.Deserialize<TResult>(TSerialized obj)
+        {
+            return Deserialize<TResult>(obj);
+        }
+
+        object ISerializer.Serialize(object obj)
+        {
+            return Serialize(obj);
+        }
+
+        object ISerializer.Deserialize(object obj)
         {
             return Deserialize<object>((TSerialized)obj);
         }

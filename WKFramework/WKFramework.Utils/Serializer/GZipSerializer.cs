@@ -17,14 +17,14 @@ namespace WKFramework.Utils.Serializer
             CompressionLevel = CompressionLevel.Optimal;
         }
 
-        public override byte[] Serialize<TSource>(TSource obj)
+        public override byte[] Serialize(object obj)
         {
             //There is an issue with GZipStream. It has to be closed first to be able to read compressed stream.
             using (var compressedStream = new MemoryStream())
             {
                 using (var gzipStream = new GZipStream(compressedStream, CompressionLevel))
                 {
-                    var bytes = base.Serialize<TSource>(obj);
+                    var bytes = base.Serialize(obj);
                     gzipStream.Write(bytes, 0, bytes.Length); 
                 }
 
