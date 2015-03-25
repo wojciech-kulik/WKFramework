@@ -9,6 +9,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WKFramework.UnitTests", "WK
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WKFramework.Utils", "WKFramework.Utils\WKFramework.Utils.csproj", "{3E306F00-27C7-4B7E-854E-715415F9C3FA}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WKFramework.WPF.Navigation", "WKFramework.WPF.Navigation\WKFramework.WPF.Navigation.csproj", "{6587657B-EC4D-4B1A-A654-0DA46F72F7D4}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,6 +29,10 @@ Global
 		{3E306F00-27C7-4B7E-854E-715415F9C3FA}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{3E306F00-27C7-4B7E-854E-715415F9C3FA}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{3E306F00-27C7-4B7E-854E-715415F9C3FA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6587657B-EC4D-4B1A-A654-0DA46F72F7D4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6587657B-EC4D-4B1A-A654-0DA46F72F7D4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6587657B-EC4D-4B1A-A654-0DA46F72F7D4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6587657B-EC4D-4B1A-A654-0DA46F72F7D4}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

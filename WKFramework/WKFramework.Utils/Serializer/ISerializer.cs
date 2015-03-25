@@ -15,7 +15,7 @@ namespace WKFramework.Utils.Serializer
 
     public interface ISerializer<TSerialized> : ISerializer
     {
-        TSerialized Serialize(object obj);
+        new TSerialized Serialize(object obj);
 
         TResult Deserialize<TResult>(TSerialized obj);
     }

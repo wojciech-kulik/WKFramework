@@ -1,0 +1,21 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace WKFramework.WPF.Navigation
+{
+    public class ViewModelFactory : IViewModelFactory
+    {
+        public T Get<T>()
+        {
+            return Activator.CreateInstance<T>();
+        }
+
+        public object Get(Type type)
+        {
+            return Activator.CreateInstance(type);
+        }
+    }
+}
