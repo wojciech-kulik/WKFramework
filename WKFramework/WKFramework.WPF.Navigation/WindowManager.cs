@@ -72,11 +72,11 @@ namespace WKFramework.WPF.Navigation
             return window;
         }
 
-        private void ThrowNoCorrespondingView(object viewModel)
+        private Exception GetNoCorrespondingViewException(object viewModel)
         {
-            throw new ArgumentOutOfRangeException("There is no corresponding View (window) for {0} ViewModel. " +
-                                                  "Make sure you use the correct naming convention.",
-                                                  viewModel.GetType().FullName);
+            return new ArgumentOutOfRangeException("There is no corresponding View (window) for {0} ViewModel. " +
+                                                   "Make sure you use the correct naming convention.",
+                                                   viewModel.GetType().FullName);
         }
 
         #endregion
@@ -115,7 +115,7 @@ namespace WKFramework.WPF.Navigation
             }
             else
             {
-                ThrowNoCorrespondingView(viewModel);
+                throw GetNoCorrespondingViewException(viewModel);
             }
         }
 
@@ -131,7 +131,7 @@ namespace WKFramework.WPF.Navigation
             }
             else
             {
-                ThrowNoCorrespondingView(viewModel);
+                throw GetNoCorrespondingViewException(viewModel);
             }
 
             return null;

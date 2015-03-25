@@ -8,12 +8,12 @@ namespace WKFramework.WPF.Navigation
 {
     public class ViewModelFactory : IViewModelFactory
     {
-        public T Get<T>()
+        public virtual T Get<T>()
         {
             return Activator.CreateInstance<T>();
         }
 
-        public object Get(Type type)
+        public virtual object Get(Type type)
         {
             return Activator.CreateInstance(type);
         }

@@ -13,7 +13,7 @@ namespace UnitTests.NavigationTests.WindowManagerTests
     public class WindowManagerTests
     {
         [TestMethod]
-        public void AttachViewModelAndShow()
+        public void ShowWindow()
         {
             var manager = new WindowManagerMock();
 
@@ -21,23 +21,18 @@ namespace UnitTests.NavigationTests.WindowManagerTests
             {
                 manager.ShowWindow<PersonDetailsViewModel>();
                 PersonDetailsView.WaitForClose();
-
                 Assert.IsInstanceOfType(PersonDetailsView.Window.DataContext, typeof(PersonDetailsViewModel));
-            });
 
-            UnitTestHelper.ShowWindowInThread(() =>
-            {
                 var viewModel = new PersonDetailsViewModel() { City = "Los Angeles" };
                 manager.ShowWindow(viewModel);
                 PersonDetailsView.WaitForClose();
-
                 Assert.AreSame(viewModel, PersonDetailsView.Window.DataContext);
                 Assert.AreEqual("Los Angeles", (PersonDetailsView.Window.DataContext as PersonDetailsViewModel).City);
             });   
         }
 
         [TestMethod]
-        public void AttachViewModelAndShowDialog()
+        public void ShowDialog()
         {
             var manager = new WindowManagerMock();
 
@@ -48,13 +43,11 @@ namespace UnitTests.NavigationTests.WindowManagerTests
 
                 Assert.AreEqual(false, result);
                 Assert.IsInstanceOfType(PersonView.Window.DataContext, typeof(PersonViewModel));
-            });
 
-            UnitTestHelper.ShowWindowInThread(() =>
-            {
+
                 PersonView.Result = true;
                 var viewModel = new PersonViewModel() { FirstName = "Jack" };
-                bool? result = manager.ShowDialog(viewModel);
+                result = manager.ShowDialog(viewModel);
 
                 Assert.AreSame(viewModel, PersonView.Window.DataContext);
                 Assert.AreEqual("Jack", (PersonView.Window.DataContext as PersonViewModel).FirstName);
@@ -85,6 +78,31 @@ namespace UnitTests.NavigationTests.WindowManagerTests
 
             AssertExt.ThrowsException<ArgumentOutOfRangeException>(() => manager.ShowWindow<ContactsViewModel>());
             AssertExt.ThrowsException<ArgumentOutOfRangeException>(() => manager.ShowWindow(vm));
+            AssertExt.ThrowsException<ArgumentOutOfRangeException>(() => manager.ShowDialog<ContactsViewModel>());
+            AssertExt.ThrowsException<ArgumentOutOfRangeException>(() => manager.ShowDialog(vm));
+        }
+
+        [TestMethod]
+        public void CustomViewModelFactory()
+        {
+            var manager = new WindowManagerMock(new CustomViewModelFactory());
+
+            UnitTestHelper.ShowWindowInThread(() =>
+            {
+                manager.ShowDialog<PersonViewModel>();
+                Assert.AreEqual("[PVW] Changed by factory", (PersonView.Window.DataContext as PersonViewModel).LastName);
+
+                manager.ShowDialog<PersonDetailsViewModel>();
+                Assert.AreEqual("[PDVW] Changed by factory", (PersonView.Window.DataContext as PersonDetailsViewModel).City);
+
+                manager.ShowWindow<PersonViewModel>();
+                PersonView.WaitForClose();
+                Assert.AreEqual("[PVW] Changed by factory", (PersonView.Window.DataContext as PersonViewModel).LastName);
+
+                manager.ShowWindow<PersonDetailsViewModel>();
+                PersonDetailsView.WaitForClose();
+                Assert.AreEqual("[PDVW] Changed by factory", (PersonView.Window.DataContext as PersonDetailsViewModel).City);
+            });
         }
     }
 }

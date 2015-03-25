@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using WKFramework.Settings;
 using UnitTests.SettingsTests.TestClasses;
+using WKFramework.Utils.Serializer;
 
 namespace UnitTests.SettingsTests
 {
@@ -87,6 +88,47 @@ namespace UnitTests.SettingsTests
             Assert.AreEqual("value1", settings2.ReadValue(TestKeyEnum.Key1));
             Assert.AreEqual(TestValueEnum.Value2, settings2.ReadValue(TestKeyEnum.Key2));
             Assert.AreEqual(TestValueEnum.Value3, settings2.ReadValue(TestKeyEnum.Key3));
+        }
+
+        [TestMethod]
+        public void CustomSerializer()
+        {
+            var settings = new FileSettings(_filePath, new GZipSerializer());
+            FillSettings(settings);
+
+            settings = new FileSettings(_filePath, new GZipSerializer());
+            var options = settings.ReadAll();
+            Assert.IsTrue(options.ContainsKey(TestKeyEnum.Key1));
+            Assert.IsTrue(options.ContainsKey(TestKeyEnum.Key2));
+            Assert.IsTrue(options.ContainsKey(TestKeyEnum.Key3));
+        }
+
+        [TestMethod]
+        public void AutoSaveSwitching()
+        {
+            var settings = (FileSettings)CreateSimpleSettings();
+
+            settings.WriteValue(TestKeyEnum.Key4, TestValueEnum.Value4);
+            settings.AutoSave = false;
+            FillSettings(settings);
+            settings.Load(_filePath);
+
+            //only one entry should be saved
+            var options = settings.ReadAll();
+            Assert.AreEqual(1, options.Count);
+            Assert.AreEqual(TestValueEnum.Value4, options[TestKeyEnum.Key4]);
+
+            //AutoSave is still off, so it shouldn't be saved
+            settings.WriteValue("a", "b");
+            settings.Load(_filePath);
+            Assert.AreEqual(1, options.Count);
+
+            //turn on AutoSave and verify if was saved to file
+            settings.AutoSave = true;
+            settings.WriteValue("a", "b");
+            settings.Load(_filePath);
+            Assert.AreEqual(1, options.Count);
+            Assert.AreEqual("b", settings.ReadValue("a"));
         }
     }
 }
