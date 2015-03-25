@@ -27,4 +27,9 @@ namespace UnitTests.NavigationTests.Mocks
 
         public string City { get; set; }
     }
+
+    public class ContactsViewModel
+    {
+        public string Title { get; set; }
+    }
 }

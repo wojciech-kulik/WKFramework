@@ -55,8 +55,8 @@
     </Otherwise>
   </Choose>
   <ItemGroup>
-    <Compile Include="NavigationTests\TestWindow.cs" />
     <Compile Include="NavigationTests\Mocks\ViewViewModelMocks.cs" />
+    <Compile Include="NavigationTests\TestWindow.cs" />
     <Compile Include="NavigationTests\WindowManagerTests\WindowManagerTests.cs" />
     <Compile Include="NavigationTests\Mocks\WindowManagerMock.cs" />
     <Compile Include="SettingsTests\CommonSettingsTests.cs" />

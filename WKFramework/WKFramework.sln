@@ -5,7 +5,7 @@ VisualStudioVersion = 12.0.31101.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WKFramework.Settings", "WKFramework.Settings\WKFramework.Settings.csproj", "{D30A5B6F-B1FC-47F0-A91A-D6A30FFD55FE}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UnitTests", "WKFramework.UnitTests\UnitTests.csproj", "{5C1C5F6F-506A-4CAB-9E78-D23CCFDF08BE}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UnitTests", "UnitTests\UnitTests.csproj", "{5C1C5F6F-506A-4CAB-9E78-D23CCFDF08BE}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WKFramework.Utils", "WKFramework.Utils\WKFramework.Utils.csproj", "{3E306F00-27C7-4B7E-854E-715415F9C3FA}"
 EndProject

@@ -83,6 +83,14 @@ namespace WKFramework.WPF.Navigation
 
         #region IWindowManager
 
+        public Dictionary<string, Type> KnownWindows
+        {
+            get
+            {
+                return _windows;
+            }
+        }
+
         public void ShowWindow<TViewModel>()
         {
             var vm = _vmFactory.Get<TViewModel>();
