@@ -1,7 +1,7 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 
-namespace WKFramework.UnitTests.Helpers
+namespace WKFramework.Utils.UnitTests.Helpers
 {
     public static class AssertExt
     {

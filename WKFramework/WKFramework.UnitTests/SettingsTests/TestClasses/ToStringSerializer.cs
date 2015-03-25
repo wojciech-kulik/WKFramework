@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using WKFramework.Utils.Serializer;
 
-namespace WKFramework.UnitTests.SettingsTests.TestClasses
+namespace UnitTests.SettingsTests.TestClasses
 {
     public class ToStringSerializer : ISerializer
     {

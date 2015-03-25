@@ -6,8 +6,8 @@
     <ProjectGuid>{5C1C5F6F-506A-4CAB-9E78-D23CCFDF08BE}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>WKFramework.UnitTests</RootNamespace>
-    <AssemblyName>WKFramework.UnitTests</AssemblyName>
+    <RootNamespace>UnitTests</RootNamespace>
+    <AssemblyName>UnitTests</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <ProjectTypeGuids>{3AC096D0-A1C2-E12C-1390-A8335801FDAB};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
@@ -35,8 +35,12 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="PresentationCore" />
+    <Reference Include="PresentationFramework" />
     <Reference Include="System" />
     <Reference Include="System.Data" />
+    <Reference Include="System.Xaml" />
+    <Reference Include="WindowsBase" />
   </ItemGroup>
   <Choose>
     <When Condition="('$(VisualStudioVersion)' == '10.0' or '$(VisualStudioVersion)' == '') and '$(TargetFrameworkVersion)' == 'v3.5'">
@@ -51,7 +55,10 @@
     </Otherwise>
   </Choose>
   <ItemGroup>
-    <Compile Include="Helpers\AssertExt.cs" />
+    <Compile Include="NavigationTests\TestWindow.cs" />
+    <Compile Include="NavigationTests\Mocks\ViewViewModelMocks.cs" />
+    <Compile Include="NavigationTests\WindowManagerTests\WindowManagerTests.cs" />
+    <Compile Include="NavigationTests\Mocks\WindowManagerMock.cs" />
     <Compile Include="SettingsTests\CommonSettingsTests.cs" />
     <Compile Include="SettingsTests\FileSettingsTests.cs" />
     <Compile Include="SettingsTests\MsSqlServerSettingsTests.cs" />
@@ -70,7 +77,12 @@
       <Project>{3e306f00-27c7-4b7e-854e-715415f9c3fa}</Project>
       <Name>WKFramework.Utils</Name>
     </ProjectReference>
+    <ProjectReference Include="..\WKFramework.WPF.Navigation\WKFramework.WPF.Navigation.csproj">
+      <Project>{6587657b-ec4d-4b1a-a654-0da46f72f7d4}</Project>
+      <Name>WKFramework.WPF.Navigation</Name>
+    </ProjectReference>
   </ItemGroup>
+  <ItemGroup />
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">
       <ItemGroup>

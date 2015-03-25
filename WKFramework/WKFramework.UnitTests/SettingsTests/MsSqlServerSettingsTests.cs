@@ -1,13 +1,13 @@
 ﻿using System;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using WKFramework.Settings;
-using WKFramework.UnitTests.SettingsTests.TestClasses;
+using UnitTests.SettingsTests.TestClasses;
 using System.Data.SqlClient;
 using WKFramework.Utils;
 using System.Collections.Generic;
-using WKFramework.UnitTests.Helpers;
+using WKFramework.Utils.UnitTests.Helpers;
 
-namespace WKFramework.UnitTests.SettingsTests
+namespace UnitTests.SettingsTests
 {
     [TestClass]
     public class MsSqlServerSettingsTests : CommonSettingsTests

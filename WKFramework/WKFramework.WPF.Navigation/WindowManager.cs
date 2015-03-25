@@ -34,7 +34,7 @@ namespace WKFramework.WPF.Navigation
             if (_isInitialized)
                 return;
 
-            var types = Assembly.GetEntryAssembly().GetTypes().Where(x => typeof(Window).IsAssignableFrom(x));
+            var types = GetAssemblyWithViews().GetTypes().Where(x => typeof(Window).IsAssignableFrom(x));
             foreach (var type in types)
             {
                 var name = ExtractName(type, ViewFileSuffix);
@@ -42,6 +42,11 @@ namespace WKFramework.WPF.Navigation
             }
 
             _isInitialized = true;
+        }
+
+        protected virtual Assembly GetAssemblyWithViews()
+        {
+            return Assembly.GetEntryAssembly();
         }
 
         #endregion

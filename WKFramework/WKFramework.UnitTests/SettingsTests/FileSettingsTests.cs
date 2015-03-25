@@ -6,9 +6,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using WKFramework.Settings;
-using WKFramework.UnitTests.SettingsTests.TestClasses;
+using UnitTests.SettingsTests.TestClasses;
 
-namespace WKFramework.UnitTests.SettingsTests
+namespace UnitTests.SettingsTests
 {
     [TestClass]
     public class FileSettingsTests : CommonSettingsTests

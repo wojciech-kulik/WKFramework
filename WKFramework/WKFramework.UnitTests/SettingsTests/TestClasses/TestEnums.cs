@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace WKFramework.UnitTests.SettingsTests.TestClasses
+namespace UnitTests.SettingsTests.TestClasses
 {
     internal enum TestValueEnum
     {

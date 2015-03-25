@@ -2,10 +2,10 @@
 using System;
 using System.Collections.Generic;
 using WKFramework.Settings;
-using WKFramework.UnitTests.Helpers;
-using WKFramework.UnitTests.SettingsTests.TestClasses;
+using UnitTests.SettingsTests.TestClasses;
+using WKFramework.Utils.UnitTests.Helpers;
 
-namespace WKFramework.UnitTests.SettingsTests
+namespace UnitTests.SettingsTests
 {
     public abstract class CommonSettingsTests
     {
