@@ -17,5 +17,10 @@ namespace UnitTests.NavigationTests.Mocks
         {
             return Assembly.GetExecutingAssembly();
         }
+
+        public Assembly GetBaseAssemblyWithViews()
+        {
+            return base.GetAssemblyWithViews();
+        }
     }
 }

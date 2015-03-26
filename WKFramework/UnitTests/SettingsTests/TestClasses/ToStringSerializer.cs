@@ -19,11 +19,7 @@ namespace UnitTests.SettingsTests.TestClasses
             var serialized = obj as string;
             var data = serialized.Split('|');
 
-            if (data[0] == "Int32")
-            {
-                return Convert.ToInt32(data[1]);
-            }
-            else if (data[0] == "TestValueEnum")
+            if (data[0] == "TestValueEnum")
             {
                 return Enum.Parse(typeof(TestValueEnum), data[1]);
             }

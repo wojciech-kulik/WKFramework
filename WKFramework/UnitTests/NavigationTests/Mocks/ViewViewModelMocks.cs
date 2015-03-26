@@ -26,10 +26,11 @@ namespace UnitTests.NavigationTests.Mocks
         public string Address { get; set; }
 
         public string City { get; set; }
+
+        public int Age { get; set; }
     }
 
     public class ContactsViewModel
     {
-        public string Title { get; set; }
     }
 }

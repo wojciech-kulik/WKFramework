@@ -34,11 +34,15 @@ namespace WKFramework.WPF.Navigation
             if (_isInitialized)
                 return;
 
-            var types = GetAssemblyWithViews().GetTypes().Where(x => typeof(Window).IsAssignableFrom(x));
-            foreach (var type in types)
+            var assembly = GetAssemblyWithViews();
+            if (assembly != null)
             {
-                var name = ExtractName(type, ViewFileSuffix);
-                _windows[name] = type;
+                var types = assembly.GetTypes().Where(x => typeof(Window).IsAssignableFrom(x));
+                foreach (var type in types)
+                {
+                    var name = ExtractName(type, ViewFileSuffix);
+                    _windows[name] = type;
+                }
             }
 
             _isInitialized = true;
@@ -103,7 +107,7 @@ namespace WKFramework.WPF.Navigation
             return ShowDialog(vm);
         }
 
-        public void ShowWindow(object viewModel)
+        public void ShowWindow<TViewModel>(TViewModel viewModel, Action<TViewModel> doAfterClose = null)
         {
             Initialize();
 
@@ -111,6 +115,8 @@ namespace WKFramework.WPF.Navigation
             if (_windows.ContainsKey(name))
             {
                 var window = CreateWindow(_windows[name], viewModel);
+                if (doAfterClose != null)
+                    window.Closed += (s, e) => doAfterClose(viewModel);
                 window.Show();
             }
             else
@@ -119,7 +125,7 @@ namespace WKFramework.WPF.Navigation
             }
         }
 
-        public bool? ShowDialog(object viewModel)
+        public bool? ShowDialog<TViewModel>(TViewModel viewModel)
         {
             Initialize();
 
@@ -133,8 +139,6 @@ namespace WKFramework.WPF.Navigation
             {
                 throw GetNoCorrespondingViewException(viewModel);
             }
-
-            return null;
         }
 
         #endregion

@@ -7,13 +7,15 @@ using UnitTests.NavigationTests.Mocks;
 using WKFramework.Utils.UnitTests;
 using WKFramework.Utils.UnitTests.Helpers;
 
-namespace UnitTests.NavigationTests.WindowManagerTests
+namespace UnitTests.NavigationTests
 {
     [TestClass]
     public class WindowManagerTests
     {
+        WindowManagerMock _manager = new WindowManagerMock();
+
         [TestMethod]
-        public void ShowWindow()
+        public void ShowWindowWithoutViewModel()
         {
             var manager = new WindowManagerMock();
 
@@ -22,45 +24,57 @@ namespace UnitTests.NavigationTests.WindowManagerTests
                 manager.ShowWindow<PersonDetailsViewModel>();
                 PersonDetailsView.WaitForClose();
                 Assert.IsInstanceOfType(PersonDetailsView.Window.DataContext, typeof(PersonDetailsViewModel));
-
-                var viewModel = new PersonDetailsViewModel() { City = "Los Angeles" };
-                manager.ShowWindow(viewModel);
-                PersonDetailsView.WaitForClose();
-                Assert.AreSame(viewModel, PersonDetailsView.Window.DataContext);
-                Assert.AreEqual("Los Angeles", (PersonDetailsView.Window.DataContext as PersonDetailsViewModel).City);
             });   
         }
 
         [TestMethod]
-        public void ShowDialog()
+        public void ShowWindowWithViewModel()
         {
-            var manager = new WindowManagerMock();
+            UnitTestHelper.ShowWindowInThread(() =>
+            {
+                var viewModel = new PersonDetailsViewModel() { City = "Los Angeles" };
+                _manager.ShowWindow(viewModel);
+                PersonDetailsView.WaitForClose();
 
+                Assert.AreSame(viewModel, PersonDetailsView.Window.DataContext);
+                Assert.AreEqual("Los Angeles", (PersonDetailsView.Window.DataContext as PersonDetailsViewModel).City);
+            });
+        }
+
+        [TestMethod]
+        public void ShowDialogWithoutViewModel()
+        {
             UnitTestHelper.ShowWindowInThread(() =>
             {
                 PersonView.Result = false;
-                var result = manager.ShowDialog<PersonViewModel>();
+                var result = _manager.ShowDialog<PersonViewModel>();
 
                 Assert.AreEqual(false, result);
                 Assert.IsInstanceOfType(PersonView.Window.DataContext, typeof(PersonViewModel));
+            });
+        }
 
-
+        [TestMethod]
+        public void ShowDialogWithViewModel()
+        {
+            UnitTestHelper.ShowWindowInThread(() =>
+            {
                 PersonView.Result = true;
                 var viewModel = new PersonViewModel() { FirstName = "Jack" };
-                result = manager.ShowDialog(viewModel);
+                var result = _manager.ShowDialog(viewModel);
 
                 Assert.AreSame(viewModel, PersonView.Window.DataContext);
                 Assert.AreEqual("Jack", (PersonView.Window.DataContext as PersonViewModel).FirstName);
                 Assert.AreEqual(true, result);
 
                 PersonView.Result = null;
-                result = manager.ShowDialog(viewModel);
+                result = _manager.ShowDialog(viewModel);
                 Assert.AreEqual(false, result);
             });
         }
 
         [TestMethod]
-        public void ListOfWindows()
+        public void CreatingWindowListFromAssembly()
         {
             var manager = new WindowManagerMock();
 
@@ -103,6 +117,13 @@ namespace UnitTests.NavigationTests.WindowManagerTests
                 PersonDetailsView.WaitForClose();
                 Assert.AreEqual("[PDVW] Changed by factory", (PersonView.Window.DataContext as PersonDetailsViewModel).City);
             });
+        }
+
+        [TestMethod]
+        public void GetAssemblyWithViews()
+        {
+            //it will return null for UnitTests
+            Assert.IsNull(new WindowManagerMock().GetBaseAssemblyWithViews());
         }
     }
 }

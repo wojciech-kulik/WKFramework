@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using UnitTests.NavigationTests.Mocks;
 using WKFramework.WPF.Navigation;
 
-namespace UnitTests.NavigationTests.WindowManagerTests
+namespace UnitTests.NavigationTests
 {
     public class CustomViewModelFactory : ViewModelFactory
     {

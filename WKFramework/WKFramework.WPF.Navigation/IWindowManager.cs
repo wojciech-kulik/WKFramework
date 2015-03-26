@@ -14,8 +14,8 @@ namespace WKFramework.WPF.Navigation
 
         bool? ShowDialog<TViewModel>();
 
-        void ShowWindow(object viewModel);
+        void ShowWindow<TViewModel>(TViewModel viewModel, Action<TViewModel> doAfterClose = null);
 
-        bool? ShowDialog(object viewModel);
+        bool? ShowDialog<TViewModel>(TViewModel viewModel);
     }
 }

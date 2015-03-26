@@ -10,8 +10,8 @@ namespace WKFramework.WPF.Navigation
 {
     public class NavigationService : INavigationService
     {
-        IWindowManager _windowManager;
-        IViewModelFactory _vmFactory = new ViewModelFactory();
+        private IWindowManager _windowManager;
+        private IViewModelFactory _vmFactory = new ViewModelFactory();
 
         public NavigationService()
         {
@@ -45,9 +45,11 @@ namespace WKFramework.WPF.Navigation
 
     public class NavigationService<TVM> : INavigationService<TVM>
     {
-        IWindowManager _windowManager;
-        TVM _viewModel;
-        Action _action;
+        private IWindowManager _windowManager;
+        private TVM _viewModel;
+        private Action<TVM> _successAction;
+        private Action<TVM> _cancelAction;
+        private Action<TVM> _closeAction;
 
         public NavigationService(IWindowManager windowManager, TVM viewModel)
         {
@@ -63,28 +65,53 @@ namespace WKFramework.WPF.Navigation
             return this;
         }
 
-        public INavigationService<TVM> DoBeforeShow(Action<TVM> action)
+        public INavigationService<TVM> SetupViewModel(Action<TVM> action)
         {
-            action(_viewModel);
+            if (action != null)
+            {
+                action(_viewModel);
+            }
             return this;
         }
 
-        public INavigationService<TVM> DoIfSuccess(Action action)
+        public INavigationService<TVM> DoIfAccepted(Action<TVM> action)
         {
-            _action = action;
+            _successAction = action;
+            return this;
+        }
+
+        public INavigationService<TVM> DoIfCancelled(Action<TVM> action)
+        {
+            _cancelAction = action;
+            return this;
+        }
+
+        public INavigationService<TVM> DoAfterClose(Action<TVM> action)
+        {
+            _closeAction = action;
             return this;
         }
 
         public void ShowWindow()
         {
-            _windowManager.ShowWindow(_viewModel);
+            _windowManager.ShowWindow(_viewModel, _closeAction);
         }
 
-        public bool ShowWindowModal()
+        public bool ShowDialog()
         {
             bool result = _windowManager.ShowDialog(_viewModel) ?? false;
-            if (result && _action != null)
-                _action();
+
+            if (_closeAction != null)
+                _closeAction(_viewModel);
+
+            if (result && _successAction != null)
+            {
+                _successAction(_viewModel);
+            }
+            else if (!result && _cancelAction != null)
+            {
+                _cancelAction(_viewModel);
+            }
 
             return result;
         }

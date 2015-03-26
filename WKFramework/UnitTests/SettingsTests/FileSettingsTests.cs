@@ -53,6 +53,7 @@ namespace UnitTests.SettingsTests
 
             Assert.AreEqual(person1.Car.Model, person2.Car.Model);
             Assert.AreEqual(person1.City, person2.City);
+
             person1.Car.Model = "changed";
             person2.City = "Las Vegas";
             Assert.AreNotEqual(person1.Car.Model, person2.Car.Model);

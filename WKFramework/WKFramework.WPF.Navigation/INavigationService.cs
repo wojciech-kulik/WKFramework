@@ -11,13 +11,17 @@ namespace WKFramework.WPF.Navigation
     {
         INavigationService<TVM> WithParam<TProperty>(Expression<Func<TVM, TProperty>> property, TProperty value);
 
-        INavigationService<TVM> DoIfSuccess(Action action);
+        INavigationService<TVM> SetupViewModel(Action<TVM> action);
 
-        INavigationService<TVM> DoBeforeShow(Action<TVM> action);
+        INavigationService<TVM> DoIfAccepted(Action<TVM> action);
+
+        INavigationService<TVM> DoIfCancelled(Action<TVM> action);
+
+        INavigationService<TVM> DoAfterClose(Action<TVM> action);
 
         void ShowWindow();
 
-        bool ShowWindowModal();
+        bool ShowDialog();
     }
 
 
