@@ -43,14 +43,12 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AppUtils.cs" />
-    <Compile Include="IoC.cs" />
     <Compile Include="Serializer\BinarySerializer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Serializer\DeepCopyExtension.cs" />
     <Compile Include="Serializer\GZipSerializer.cs" />
     <Compile Include="Serializer\ISerializer.cs" />
     <Compile Include="Serializer\Serializer.cs" />
-    <Compile Include="SimpleContainer.cs" />
     <Compile Include="UnitTests\AssertExt.cs" />
     <Compile Include="UnitTests\UnitTestHelper.cs" />
   </ItemGroup>

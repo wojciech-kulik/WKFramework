@@ -69,6 +69,12 @@
     <Compile Include="SettingsTests\TestClasses\TestEnums.cs" />
     <Compile Include="SettingsTests\TestClasses\NoneSerializer.cs" />
     <Compile Include="SettingsTests\TestClasses\ToStringSerializer.cs" />
+    <Compile Include="TestClasses\NotSerializable.cs" />
+    <Compile Include="TestClasses\SerializableClasses.cs" />
+    <Compile Include="UtilsTests\CommonBinarySerializerTests.cs" />
+    <Compile Include="UtilsTests\BinarySerializerTests.cs" />
+    <Compile Include="UtilsTests\GZipSerializerTests.cs" />
+    <Compile Include="UtilsTests\DeepCopyTests.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\WKFramework.Settings\WKFramework.Settings.csproj">

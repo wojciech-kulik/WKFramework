@@ -19,6 +19,9 @@ namespace WKFramework.Utils.Serializer
 
         public override byte[] Serialize(object obj)
         {
+            if (obj == null)
+                return null;
+
             //There is an issue with GZipStream. It has to be closed first to be able to read compressed stream.
             using (var compressedStream = new MemoryStream())
             {
@@ -34,6 +37,9 @@ namespace WKFramework.Utils.Serializer
 
         public override TResult Deserialize<TResult>(byte[] data)
         {
+            if (data == null)
+                return default(TResult);
+
             using (var compressedStream = new MemoryStream(data))
             using (var gzipStream = new GZipStream(compressedStream, CompressionMode.Decompress))
             using (var decompressedStream = new MemoryStream())
