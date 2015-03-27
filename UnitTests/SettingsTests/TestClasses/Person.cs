@@ -33,6 +33,20 @@ namespace UnitTests.SettingsTests.TestClasses
         {
             Address = address;
         }
+
+        private string _propertyWithoutSetter = null;
+        public string PropertyWithoutSetter
+        {
+            get { return _propertyWithoutSetter; }
+        }
+
+        private string _propertyWithoutGetter;
+        public string PropertyWithoutGetter
+        {
+            set { _propertyWithoutGetter = value; }
+        }
+
+        public static string StaticProperty { get; set; }
     }
 
     [Serializable]

@@ -44,6 +44,18 @@ namespace WKFramework.Settings
 
         #region Private methods
 
+        private bool CanSetProperty(object obj, PropertyInfo property)
+        {
+            var setter = property.GetSetMethod(true);
+            return setter != null && (obj != null || setter.IsStatic);
+        }
+
+        private bool CanGetProperty(object obj, PropertyInfo property)
+        {
+            var getter = property.GetGetMethod(true);
+            return getter != null && (obj != null || getter.IsStatic);
+        }
+
         private void TryAutoSave()
         {
             if (AutoSave)
@@ -55,9 +67,9 @@ namespace WKFramework.Settings
             return String.Format("{0}.{1}", property.DeclaringType.Name, property.Name);
         }
 
-        private void ForEachProperty(object obj, Action<PropertyInfo> action)
+        private void ForEachProperty(Type type, Func<PropertyInfo, bool> filter, Action<PropertyInfo> action)
         {
-            var properties = obj.GetType().GetProperties();
+            var properties = type.GetProperties().Where(filter);
             foreach (var prop in properties)
             {
                 action(prop);
@@ -217,34 +229,77 @@ namespace WKFramework.Settings
             if (obj == null)
                 throw new ArgumentNullException("obj");
 
-            ForEachProperty(obj, prop => 
-            {
-                var key = GetKeyFromProperty(prop);
-                if (_settings.ContainsKey(key))
-                    _settings.Remove(key);
-            });
+            RemovePropertiesOfType(obj.GetType());
+        }
+
+        public void RemoveProperties(Type type)
+        {
+            if (type == null)
+                throw new ArgumentNullException("type");
+
+            RemovePropertiesOfType(type);
+        }
+
+        protected void RemovePropertiesOfType(Type type)
+        {
+            ForEachProperty(type, 
+                x => true,
+                prop =>
+                {
+                    var key = GetKeyFromProperty(prop);
+                    if (_settings.ContainsKey(key))
+                        _settings.Remove(key);
+                });
             TryAutoSave();
         }
 
-        public void LoadProperties(object destination)
+        public void ReadProperties(object destination)
         {
             if (destination == null)
                 throw new ArgumentNullException("destination");
 
-            ForEachProperty(destination, prop =>
-            {
-                var key = GetKeyFromProperty(prop);
-                if (_settings.ContainsKey(key))
-                    prop.SetValue(destination, _settings[key]);
-            });
+            ReadPropertiesOfType(destination, destination.GetType());
         }
 
-        public bool SaveProperties(object source)
+        public void ReadStaticProperties(Type destinationType)
+        {
+            if (destinationType == null)
+                throw new ArgumentNullException("destinationType");
+
+            ReadPropertiesOfType(null, destinationType);
+        }
+
+        protected void ReadPropertiesOfType(object destination, Type type)
+        {
+            ForEachProperty(type, 
+                x => CanSetProperty(destination, x),
+                prop =>
+                {
+                    var key = GetKeyFromProperty(prop);
+                    if (_settings.ContainsKey(key))
+                        prop.SetValue(destination, _settings[key]);
+                });
+        }
+
+        public bool WriteProperties(object source)
         {
             if (source == null)
                 throw new ArgumentNullException("source");
 
-            ForEachProperty(source, prop => _settings[GetKeyFromProperty(prop)] = prop.GetValue(source));
+            return WritePropertiesOfType(source, source.GetType());
+        }
+
+        public bool WriteStaticProperties(Type sourceType)
+        {
+            if (sourceType == null)
+                throw new ArgumentNullException("sourceType");
+
+            return WritePropertiesOfType(null, sourceType);
+        }
+
+        protected bool WritePropertiesOfType(object source, Type type)
+        {
+            ForEachProperty(type, x => CanGetProperty(source, x), prop => _settings[GetKeyFromProperty(prop)] = prop.GetValue(source));
             TryAutoSave();
             return true;
         }

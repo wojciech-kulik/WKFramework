@@ -200,6 +200,18 @@ namespace WKFramework.Settings
 
         #region Private methods
 
+        private bool CanSetProperty(object obj, PropertyInfo property)
+        {
+            var setter = property.GetSetMethod(true);
+            return setter != null && (obj != null || setter.IsStatic);
+        }
+
+        private bool CanGetProperty(object obj, PropertyInfo property)
+        {
+            var getter = property.GetGetMethod(true);
+            return getter != null && (obj != null || getter.IsStatic);
+        }
+
         private string PrepareListOfParams(string param, int count)
         {
             StringBuilder listOfParams = new StringBuilder();
@@ -480,7 +492,20 @@ namespace WKFramework.Settings
             if (obj == null)
                 throw new ArgumentNullException("obj");
 
-            var properties = obj.GetType().GetProperties();
+            RemovePropertiesOfType(obj.GetType());
+        }
+
+        public void RemoveProperties(Type type)
+        {
+            if (type == null)
+                throw new ArgumentNullException("type");
+
+            RemovePropertiesOfType(type);
+        }
+
+        protected void RemovePropertiesOfType(Type type)
+        {
+            var properties = type.GetProperties();
 
             ExecuteCommand(PrepareRemoveManySQL(properties.Count()), command =>
             {
@@ -493,12 +518,62 @@ namespace WKFramework.Settings
             });
         }
 
-        public void LoadProperties(object destination)
+        public void ReadProperties(object destination)
         {
             if (destination == null)
                 throw new ArgumentNullException("destination");
 
-            var properties = destination.GetType().GetProperties();
+            ReadPropertiesOfType(destination, destination.GetType());
+        }
+
+        public bool WriteProperties(object source)
+        {
+            if (source == null)
+                throw new ArgumentNullException("source");
+
+            return WritePropertiesOfType(source, source.GetType());
+        }
+
+        public void ReadStaticProperties(Type destinationType)
+        {
+            if (destinationType == null)
+                throw new ArgumentNullException("destinationType");
+
+            ReadPropertiesOfType(null, destinationType);
+        }
+
+        public bool WriteStaticProperties(Type sourceType)
+        {
+            if (sourceType == null)
+                throw new ArgumentNullException("sourceType");
+
+            return WritePropertiesOfType(null, sourceType);
+        }
+
+        protected bool WritePropertiesOfType(object source, Type type)
+        {
+            var properties = type.GetProperties().Where(x => CanGetProperty(source, x));
+            var count = properties.Count();
+
+            int affectedRows = ExecuteCommandInTransaction(PrepareWriteManySQL(count), command =>
+            {
+                int i = 0;
+                foreach (var prop in properties)
+                {
+                    var key = GetKeyFromProperty(prop);
+                    command.Parameters.AddWithValue(KeyToDelParam + i.ToString(), key);
+                    command.Parameters.AddWithValue(KeyParam + i.ToString(), key);
+                    AddValueParam(command, ValueParam + i.ToString(), prop.GetValue(source));
+                    i++;
+                }
+            });
+
+            return affectedRows == count;
+        }
+
+        protected void ReadPropertiesOfType(object destination, Type type)
+        {
+            var properties = type.GetProperties().Where(x => CanSetProperty(destination, x));
 
             ExecuteQuery(
                 PrepareReadManySQL(properties.Count()),
@@ -522,30 +597,6 @@ namespace WKFramework.Settings
                         }
                     }
                 });
-        }
-
-        public bool SaveProperties(object source)
-        {
-            if (source == null)
-                throw new ArgumentNullException("source");
-
-            var properties = source.GetType().GetProperties();
-            var count = properties.Count();
-
-            int affectedRows = ExecuteCommandInTransaction(PrepareWriteManySQL(count), command =>
-            {
-                int i = 0;
-                foreach (var prop in properties)
-                {
-                    var key = GetKeyFromProperty(prop);
-                    command.Parameters.AddWithValue(KeyToDelParam + i.ToString(), key);
-                    command.Parameters.AddWithValue(KeyParam + i.ToString(), key);
-                    AddValueParam(command, ValueParam + i.ToString(), prop.GetValue(source));
-                    i++;
-                }
-            });
-
-            return affectedRows == count;
         }
     }
 }

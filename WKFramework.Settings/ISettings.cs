@@ -21,10 +21,18 @@ namespace WKFramework.Settings
 
         IDictionary<object, TValue> ReadAll<TValue>();
 
+        void ReadProperties(object destination);
+
+        void ReadStaticProperties(Type destinationType);
+
         bool WriteValue(object key, object value);
 
         bool WriteMany(IDictionary<object, object> values);
 
+        bool WriteProperties(object source);
+
+        bool WriteStaticProperties(Type sourceType);
+        
         bool Remove(object key);
 
         bool RemoveMany(ICollection keys);
@@ -33,9 +41,7 @@ namespace WKFramework.Settings
 
         void RemoveProperties(object obj);
 
-        void LoadProperties(object destination);
-
-        bool SaveProperties(object source);
+        void RemoveProperties(Type type);
 
         void SetKeyConversion(Func<object, object> conversion);
     }

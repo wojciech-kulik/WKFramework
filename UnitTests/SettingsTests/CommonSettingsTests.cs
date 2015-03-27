@@ -199,7 +199,7 @@ namespace UnitTests.SettingsTests
         }
 
         [TestMethod]
-        public void LoadProperties()
+        public void ReadProperties()
         {
             var settings = CreateSimpleSettings();
 
@@ -207,24 +207,40 @@ namespace UnitTests.SettingsTests
             settings.WriteValue("Person.LastName", "Smith");
             settings.WriteValue("Person.DateOfBirth", new DateTime(1990, 06, 05));
             settings.WriteValue("Person.Height", 175);
+            settings.WriteValue("Person.StaticProperty", "TEST");
             settings.WriteValue("BasePerson.City", "Los Angeles");
 
             var person = new Person();
-            settings.LoadProperties(person);
+            settings.ReadProperties(person);
 
             Assert.AreEqual("John", person.FirstName);
             Assert.AreEqual("Smith", person.LastName);
             Assert.AreEqual(new DateTime(1990, 06, 05), person.DateOfBirth);
             Assert.AreEqual(175, person.Height);
             Assert.AreEqual("Los Angeles", person.City);
+            Assert.AreEqual("TEST", Person.StaticProperty);
             Assert.IsNull(person.PhoneNumber);
         }
 
         [TestMethod]
-        public void SaveProperties()
+        public void ReadStaticProperties()
+        {
+            var settings = CreateSimpleSettings();
+            
+            Person.StaticProperty = "test";
+            settings.WriteStaticProperties(typeof(Person));
+            Person.StaticProperty = null;
+
+            settings.ReadStaticProperties(typeof(Person));
+            Assert.AreEqual("test", Person.StaticProperty);
+        }
+
+        [TestMethod]
+        public void WriteProperties()
         {
             var settings = CreateSimpleSettings();
 
+            Person.StaticProperty = "test";
             var person = new Person()
             {
                 FirstName = "John",
@@ -234,10 +250,11 @@ namespace UnitTests.SettingsTests
                 City = "Los Angeles"
             };
             person.SetAddress("Shouldn't be saved");
-            Assert.IsTrue(settings.SaveProperties(person));
+            Assert.IsTrue(settings.WriteProperties(person));
+            Person.StaticProperty = null;
 
             var loadedPerson = new Person();
-            settings.LoadProperties(loadedPerson);
+            settings.ReadProperties(loadedPerson);
 
             Assert.AreEqual(person.FirstName, loadedPerson.FirstName);
             Assert.AreEqual(person.LastName, loadedPerson.LastName);
@@ -245,12 +262,25 @@ namespace UnitTests.SettingsTests
             Assert.AreEqual(person.Height, loadedPerson.Height);
             Assert.AreEqual(person.PhoneNumber, loadedPerson.PhoneNumber);
             Assert.AreEqual(person.City, loadedPerson.City);
+            Assert.AreEqual("test", Person.StaticProperty);
             Assert.IsNull(settings.ReadValue("Person.Address"));
             Assert.IsNotNull(settings.ReadValue("BasePerson.City"));
         }
 
         [TestMethod]
-        public void RemoveProperties()
+        public void WriteStaticProperties()
+        {
+            var settings = CreateSimpleSettings();
+            Person.StaticProperty = "test";
+            settings.WriteStaticProperties(typeof(Person));
+
+            var options = settings.ReadAll();
+            Assert.AreEqual(1, options.Count);
+            Assert.AreEqual(Person.StaticProperty, options["Person.StaticProperty"]);
+        }
+
+        [TestMethod]
+        public void RemovePropertiesObjectParameter()
         {
             var settings = CreateSimpleSettings();
 
@@ -261,12 +291,35 @@ namespace UnitTests.SettingsTests
                 DateOfBirth = new DateTime(1990, 06, 05),
                 Height = 175,
             };
-            Assert.IsTrue(settings.SaveProperties(person));
-            Assert.AreEqual(7, settings.ReadAll().Count);
+            Assert.IsTrue(settings.WriteProperties(person));
+            Assert.AreEqual(9, settings.ReadAll().Count);
 
             settings.WriteValue("TestKey", "test");
 
             settings.RemoveProperties(person);
+            var allSettings = settings.ReadAll();
+            Assert.AreEqual(1, allSettings.Count);
+            Assert.IsTrue(allSettings.ContainsKey("TestKey"));
+        }
+
+        [TestMethod]
+        public void RemovePropertiesTypeParameter()
+        {
+            var settings = CreateSimpleSettings();
+
+            var person = new Person()
+            {
+                FirstName = "John",
+                LastName = "Smith",
+                DateOfBirth = new DateTime(1990, 06, 05),
+                Height = 175,
+            };
+            Assert.IsTrue(settings.WriteProperties(person));
+            Assert.AreEqual(9, settings.ReadAll().Count);
+
+            settings.WriteValue("TestKey", "test");
+
+            settings.RemoveProperties(typeof(Person));
             var allSettings = settings.ReadAll();
             Assert.AreEqual(1, allSettings.Count);
             Assert.IsTrue(allSettings.ContainsKey("TestKey"));
@@ -289,10 +342,12 @@ namespace UnitTests.SettingsTests
             AssertExt.ThrowsException<ArgumentNullException>(() => settings.WriteMany(new Dictionary<object, object>() { { "Key1", "test" }, { null, "test" } }));
             AssertExt.ThrowsException<ArgumentNullException>(() => settings.Remove(null));
             AssertExt.ThrowsException<ArgumentNullException>(() => settings.RemoveMany(new string[] { "Key1", null }));
-            AssertExt.ThrowsException<ArgumentNullException>(() => settings.LoadProperties(null));
-            AssertExt.ThrowsException<ArgumentNullException>(() => settings.SaveProperties(null));
-            AssertExt.ThrowsException<ArgumentNullException>(() => settings.RemoveProperties(null));
-            
+            AssertExt.ThrowsException<ArgumentNullException>(() => settings.ReadProperties(null));
+            AssertExt.ThrowsException<ArgumentNullException>(() => settings.ReadStaticProperties(null));
+            AssertExt.ThrowsException<ArgumentNullException>(() => settings.WriteProperties(null));
+            AssertExt.ThrowsException<ArgumentNullException>(() => settings.WriteStaticProperties(null));
+            AssertExt.ThrowsException<ArgumentNullException>(() => settings.RemoveProperties((Type)null));
+            AssertExt.ThrowsException<ArgumentNullException>(() => settings.RemoveProperties((object)null));
         }
 
         [TestMethod]
