@@ -4,8 +4,6 @@ using System.Diagnostics;
 using System.Threading.Tasks;
 using System.Windows;
 using UnitTests.NavigationTests.Mocks;
-using WKFramework.Utils.UnitTests;
-using WKFramework.Utils.UnitTests.Helpers;
 
 namespace UnitTests.NavigationTests
 {

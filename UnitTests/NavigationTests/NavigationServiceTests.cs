@@ -2,7 +2,6 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using UnitTests.NavigationTests.Mocks;
 using WKFramework.WPF.Navigation;
-using WKFramework.Utils.UnitTests.Helpers;
 
 namespace UnitTests.NavigationTests
 {

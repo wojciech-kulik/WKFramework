@@ -5,7 +5,6 @@ using UnitTests.SettingsTests.TestClasses;
 using System.Data.SqlClient;
 using WKFramework.Utils;
 using System.Collections.Generic;
-using WKFramework.Utils.UnitTests.Helpers;
 
 namespace UnitTests.SettingsTests
 {

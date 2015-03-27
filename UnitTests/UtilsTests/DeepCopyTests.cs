@@ -2,8 +2,8 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using UnitTests.TestClasses;
 using System.Collections.Generic;
+using WKFramework.Utils;
 using WKFramework.Utils.Serializer;
-using WKFramework.Utils.UnitTests.Helpers;
 
 namespace UnitTests.UtilsTests
 {

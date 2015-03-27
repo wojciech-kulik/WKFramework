@@ -3,7 +3,6 @@ using System;
 using System.Collections.Generic;
 using WKFramework.Settings;
 using UnitTests.SettingsTests.TestClasses;
-using WKFramework.Utils.UnitTests.Helpers;
 
 namespace UnitTests.SettingsTests
 {

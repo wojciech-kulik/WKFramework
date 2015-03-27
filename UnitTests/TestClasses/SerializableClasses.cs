@@ -59,5 +59,19 @@ namespace UnitTests.TestClasses
 
             return true;
         }
+
+        public override int GetHashCode()
+        {
+            unchecked // Overflow is fine, just wrap
+            {
+                int hash = 17;
+                hash = hash * 23 + Capacity.GetHashCode();
+                if (Items != null)
+                    hash = hash * 23 + Items.GetHashCode();
+                if (Owner != null)
+                    hash = hash * 23 + Owner.GetHashCode();
+                return hash;
+            }
+        }
     }
 }

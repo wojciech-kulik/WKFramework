@@ -7,7 +7,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace WKFramework.Utils.UnitTests
+namespace UnitTests
 {
     public static class UnitTestHelper
     {

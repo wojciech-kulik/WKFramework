@@ -75,6 +75,8 @@
     <Compile Include="UtilsTests\BinarySerializerTests.cs" />
     <Compile Include="UtilsTests\GZipSerializerTests.cs" />
     <Compile Include="UtilsTests\DeepCopyTests.cs" />
+    <Compile Include="AssertExt.cs" />
+    <Compile Include="UnitTestHelper.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\WKFramework.Settings\WKFramework.Settings.csproj">
