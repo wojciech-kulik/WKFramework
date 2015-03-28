@@ -45,6 +45,7 @@
     <Compile Include="DeepCopyExtension.cs" />
     <Compile Include="Serializer\GZipSerializer.cs" />
     <Compile Include="Serializer\ISerializer.cs" />
+    <Compile Include="Serializer\NonSerializedPropertyAttribute.cs" />
     <Compile Include="Serializer\Serializer.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

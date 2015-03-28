@@ -427,5 +427,28 @@ namespace UnitTests.SettingsTests
             Assert.AreEqual(person.Car.Model, loadedPerson.Car.Model);
             Assert.AreEqual(person.Car.Year, loadedPerson.Car.Year);
         }
+
+        [TestMethod]
+        public void NonSerializedPropertyAttribute()
+        {
+            var settings = CreateSimpleSettings();
+            var person = new Person()
+            {
+                FirstName = "John",
+                LastName = "Smith",
+                NonSerialized = "test"
+            };
+            Assert.IsTrue(settings.WriteProperties(person));
+
+            person = new Person();
+            settings = CreateSimpleSettings();
+            settings.ReadProperties(person);
+
+            var options = settings.ReadAll();
+            Assert.IsFalse(options.ContainsKey("Person.NonSerialized"));
+            Assert.AreEqual("John", person.FirstName);
+            Assert.AreEqual("Smith", person.LastName);
+            Assert.IsNull(person.NonSerialized);
+        }
     }
 }

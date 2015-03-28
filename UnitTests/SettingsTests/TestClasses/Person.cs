@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using WKFramework.Utils.Serializer;
 
 namespace UnitTests.SettingsTests.TestClasses
 {
@@ -33,6 +34,9 @@ namespace UnitTests.SettingsTests.TestClasses
         {
             Address = address;
         }
+
+        [NonSerializedProperty]
+        public string NonSerialized { get; set; }
 
         private string _propertyWithoutSetter = null;
         public string PropertyWithoutSetter

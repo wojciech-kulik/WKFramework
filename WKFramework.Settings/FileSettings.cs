@@ -69,7 +69,7 @@ namespace WKFramework.Settings
 
         private void ForEachProperty(Type type, Func<PropertyInfo, bool> filter, Action<PropertyInfo> action)
         {
-            var properties = type.GetProperties().Where(filter);
+            var properties = type.GetProperties().Where(x => !x.IsDefined(typeof(NonSerializedPropertyAttribute), false)).Where(filter);
             foreach (var prop in properties)
             {
                 action(prop);

@@ -552,7 +552,7 @@ namespace WKFramework.Settings
 
         protected bool WritePropertiesOfType(object source, Type type)
         {
-            var properties = type.GetProperties().Where(x => CanGetProperty(source, x));
+            var properties = type.GetProperties().Where(x => !x.IsDefined(typeof(NonSerializedPropertyAttribute), false)).Where(x => CanGetProperty(source, x));
             var count = properties.Count();
 
             int affectedRows = ExecuteCommandInTransaction(PrepareWriteManySQL(count), command =>
@@ -573,7 +573,7 @@ namespace WKFramework.Settings
 
         protected void ReadPropertiesOfType(object destination, Type type)
         {
-            var properties = type.GetProperties().Where(x => CanSetProperty(destination, x));
+            var properties = type.GetProperties().Where(x => !x.IsDefined(typeof(NonSerializedPropertyAttribute), false)).Where(x => CanSetProperty(destination, x));
 
             ExecuteQuery(
                 PrepareReadManySQL(properties.Count()),
