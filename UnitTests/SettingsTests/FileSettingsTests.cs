@@ -77,18 +77,144 @@ namespace UnitTests.SettingsTests
         public void Load()
         {
             CreateSettingsAndFill();
-            var settings = (FileSettings)CreateSimpleSettings();            
+            var settings = new FileSettings();
+            settings.Load(_filePath);
 
-            Assert.AreEqual("value1", settings.ReadValue(TestKeyEnum.Key1));
-            Assert.AreEqual(TestValueEnum.Value2, settings.ReadValue(TestKeyEnum.Key2));
-            Assert.AreEqual(TestValueEnum.Value3, settings.ReadValue(TestKeyEnum.Key3));
+            var options = settings.ReadAll();
+            Assert.AreEqual(3, options.Count);
+            Assert.AreEqual("value1", options[TestKeyEnum.Key1]);
+            Assert.AreEqual(TestValueEnum.Value2, options[TestKeyEnum.Key2]);
+            Assert.AreEqual(TestValueEnum.Value3, options[TestKeyEnum.Key3]);
+        }
 
-            var settings2 = new FileSettings();
-            settings2.Load(_filePath);
+        private void TestIfSettingsContainsOptionsAfterReadFromFile(Action<FileSettings> action)
+        {
+            var settings = (FileSettings)CreateSimpleSettings();
+            action(settings);
 
-            Assert.AreEqual("value1", settings2.ReadValue(TestKeyEnum.Key1));
-            Assert.AreEqual(TestValueEnum.Value2, settings2.ReadValue(TestKeyEnum.Key2));
-            Assert.AreEqual(TestValueEnum.Value3, settings2.ReadValue(TestKeyEnum.Key3));
+            settings.Load(_filePath);
+            var options = settings.ReadAll();
+            Assert.AreEqual(2, options.Count);
+            Assert.AreEqual("1", options[TestKeyEnum.Key1]);
+            Assert.AreEqual("2", options[TestKeyEnum.Key2]);
+
+            settings = (FileSettings)CreateSimpleSettings();
+            options = settings.ReadAll();
+            Assert.AreEqual(2, options.Count);
+            Assert.AreEqual("1", options[TestKeyEnum.Key1]);
+            Assert.AreEqual("2", options[TestKeyEnum.Key2]);
+        }
+
+        [TestMethod]
+        public void ReadFromFileAfterWrite()
+        {
+            TestIfSettingsContainsOptionsAfterReadFromFile(settings =>
+                {
+                    settings.WriteValue(TestKeyEnum.Key1, "1");
+                    settings.WriteValue(TestKeyEnum.Key2, "2");
+                });
+        }
+
+        [TestMethod]
+        public void ReadFromFileAfterWriteMany()
+        {
+            TestIfSettingsContainsOptionsAfterReadFromFile(settings => settings.WriteMany(new Dictionary<object, object>() { { TestKeyEnum.Key1, "1" }, { TestKeyEnum.Key2, "2" } }));
+        }
+
+        [TestMethod]
+        public void ReadFromFileAfterWriteProperties()
+        {
+            var settings = CreateSimpleSettings();
+
+            Person.StaticProperty = "test";
+            var person = new Person()
+            {
+                FirstName = "John",
+                LastName = "Smith",
+                DateOfBirth = new DateTime(1990, 06, 05),
+                Height = 175,
+                City = "Los Angeles"
+            };
+            person.SetAddress("Shouldn't be saved");
+            Assert.IsTrue(settings.WriteProperties(person));
+            Person.StaticProperty = null;
+
+            var loadedPerson = new Person();
+            settings = CreateSimpleSettings();
+            settings.ReadProperties(loadedPerson);
+
+            Assert.AreEqual(person.FirstName, loadedPerson.FirstName);
+            Assert.AreEqual(person.LastName, loadedPerson.LastName);
+            Assert.AreEqual(person.DateOfBirth, loadedPerson.DateOfBirth);
+            Assert.AreEqual(person.Height, loadedPerson.Height);
+            Assert.AreEqual(person.PhoneNumber, loadedPerson.PhoneNumber);
+            Assert.AreEqual(person.City, loadedPerson.City);
+            Assert.AreEqual("test", Person.StaticProperty);
+            Assert.IsNull(settings.ReadValue("Person.Address"));
+            Assert.IsNotNull(settings.ReadValue("BasePerson.City"));
+        }
+
+        [TestMethod]
+        public void ReadFromFileAfterRemoveProperties()
+        {
+            var settings = CreateSimpleSettings();
+
+            var person = new Person()
+            {
+                FirstName = "John",
+                LastName = "Smith",
+                DateOfBirth = new DateTime(1990, 06, 05),
+                Height = 175,
+            };
+            Assert.IsTrue(settings.WriteProperties(person));
+
+            settings = CreateSimpleSettings();
+            Assert.AreEqual(9, settings.ReadAll().Count);
+            settings.WriteValue("TestKey", "test");
+            settings.RemoveProperties(person);
+
+            settings = CreateSimpleSettings();
+            var allSettings = settings.ReadAll();
+            Assert.AreEqual(1, allSettings.Count);
+            Assert.IsTrue(allSettings.ContainsKey("TestKey"));
+        }
+
+        [TestMethod]
+        public void ReadFromFileAfterRemove()
+        {
+            var settings = (FileSettings)CreateSettingsAndFill();           
+            settings.Load(_filePath);
+            settings.Remove(TestKeyEnum.Key1);
+
+            settings = (FileSettings)CreateSimpleSettings();
+            var options = settings.ReadAll();
+            Assert.AreEqual(2, options.Count);
+            Assert.AreEqual(TestValueEnum.Value2, options[TestKeyEnum.Key2]);
+            Assert.AreEqual(TestValueEnum.Value3, options[TestKeyEnum.Key3]);
+        }
+
+        [TestMethod]
+        public void ReadFromFileAfterRemoveMany()
+        {
+            var settings = (FileSettings)CreateSettingsAndFill();
+            settings.Load(_filePath);
+            settings.RemoveMany(new object[] { TestKeyEnum.Key1, TestKeyEnum.Key2 });
+
+            settings = (FileSettings)CreateSimpleSettings();
+            var options = settings.ReadAll();
+            Assert.AreEqual(1, options.Count);
+            Assert.AreEqual(TestValueEnum.Value3, options[TestKeyEnum.Key3]);
+        }
+
+        [TestMethod]
+        public void ReadFromFileAfterRemoveAll()
+        {
+            var settings = (FileSettings)CreateSettingsAndFill();
+            settings.Load(_filePath);
+            settings.RemoveAll();
+
+            settings = (FileSettings)CreateSimpleSettings();
+            Assert.AreEqual(0, settings.ReadAll().Count);
         }
 
         [TestMethod]

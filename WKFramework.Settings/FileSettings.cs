@@ -14,7 +14,7 @@ namespace WKFramework.Settings
     public class FileSettings : ISettings
     {
         protected string _filePath;
-        protected ISerializer<byte[]> _serializer = new BinarySerializer();
+        protected ISerializer<byte[]> _serializer = new GZipSerializer();
         protected Dictionary<object, object> _settings = new Dictionary<object, object>();
         protected Func<object, object> _keyConversion = x => x;
 
@@ -173,34 +173,44 @@ namespace WKFramework.Settings
         public bool WriteValue(object key, object value)
         {
             ValidateKey(key);
-
-            key = _keyConversion(key);
-            _settings[key] = value;
+            WriteSingle(key, value);
             TryAutoSave();
             return true;
         }
 
+        protected void WriteSingle(object key, object value)
+        {
+            key = _keyConversion(key);
+            _settings[key] = value;
+        }
+
         public bool WriteMany(IDictionary<object, object> values)
         {
+            ValidateKeys(values.Keys);
             foreach (var key in values.Keys)
             {
-                WriteValue(key, values[key]);
+                WriteSingle(key, values[key]);
             }
+            TryAutoSave();
             return true;
         }
 
         public bool Remove(object key)
         {
             ValidateKey(key);
+            bool result = RemoveSingle(key);
+            TryAutoSave();
 
+            return result;
+        }
+
+        protected bool RemoveSingle(object key)
+        {
             key = _keyConversion(key);
             if (!_settings.ContainsKey(key))
                 return false;
 
-            bool result = _settings.Remove(key);
-            TryAutoSave();
-
-            return result;
+            return _settings.Remove(key);
         }
 
         public bool RemoveMany(ICollection keys)
@@ -210,7 +220,7 @@ namespace WKFramework.Settings
             bool result = true;
             foreach (var key in keys)
             {
-                if (!Remove(key))
+                if (!RemoveSingle(key))
                     result = false;
             }
 
