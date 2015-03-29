@@ -450,5 +450,18 @@ namespace UnitTests.SettingsTests
             Assert.AreEqual("Smith", person.LastName);
             Assert.IsNull(person.NonSerialized);
         }
+
+        [TestMethod]
+        public void ReadWriteDateTime()
+        {
+            var settings = CreateSimpleSettings();
+            var now = DateTime.Now;
+            settings.WriteValue("Date", now);
+
+            settings = CreateSimpleSettings();
+            var now2 = settings.ReadValue<DateTime>("Date");
+            Assert.AreEqual(now, now2);
+            Assert.AreNotSame(now, now2);
+        }
     }
 }
