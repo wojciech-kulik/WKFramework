@@ -121,7 +121,7 @@ namespace UnitTests.NavigationTests
         public void GetAssemblyWithViews()
         {
             //it will return null for UnitTests, added to get 100% code coverage
-            new WindowManagerMock().GetBaseAssemblyWithViews();
+            new WindowManagerMock().GetBaseAssembliesWithViews();
         }
     }
 }

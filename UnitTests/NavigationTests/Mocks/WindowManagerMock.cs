@@ -13,14 +13,14 @@ namespace UnitTests.NavigationTests.Mocks
             : base(factory)
         { }
 
-        protected override Assembly GetAssemblyWithViews()
+        protected override Assembly[] GetAssembliesWithViews()
         {
-            return Assembly.GetExecutingAssembly();
+            return new Assembly[] { Assembly.GetExecutingAssembly() };
         }
 
-        public Assembly GetBaseAssemblyWithViews()
+        public Assembly[] GetBaseAssembliesWithViews()
         {
-            return base.GetAssemblyWithViews();
+            return base.GetAssembliesWithViews();
         }
     }
 }

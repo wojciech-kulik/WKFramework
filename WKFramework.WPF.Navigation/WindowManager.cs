@@ -34,9 +34,12 @@ namespace WKFramework.WPF.Navigation
             if (_isInitialized)
                 return;
 
-            var assembly = GetAssemblyWithViews();
-            if (assembly != null)
+            var assemblies = GetAssembliesWithViews();
+            foreach (var assembly in assemblies)
             {
+                if (assembly == null)
+                    continue;
+
                 var types = assembly.GetTypes().Where(x => typeof(Window).IsAssignableFrom(x));
                 foreach (var type in types)
                 {
@@ -48,9 +51,9 @@ namespace WKFramework.WPF.Navigation
             _isInitialized = true;
         }
 
-        protected virtual Assembly GetAssemblyWithViews()
+        protected virtual Assembly[] GetAssembliesWithViews()
         {
-            return Assembly.GetEntryAssembly();
+            return new Assembly[] { Assembly.GetEntryAssembly() } ;
         }
 
         #endregion

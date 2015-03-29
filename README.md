@@ -28,8 +28,9 @@ Key-value settings, where any object can be used as a key or value. For now ther
   var settings = FileSettings("settings.dat"); //the same interface is availalbe for MsSqlServerSettings
   
   settings.WriteProperties(person); //saves only public properties
-  settings.WriteStaticProperties(Settings); //you can also save properties from a static class
+  settings.WriteStaticProperties(typeof(Settings)); //you can also save properties from a static class
   settings.WriteValue("LastUpdate", DateTime.Now);
+  settings.WriteValue(SettingsKey.Counter, 20);
   ```
 
   Reading from settings:
@@ -38,8 +39,9 @@ Key-value settings, where any object can be used as a key or value. For now ther
   var settings = FileSettings("settings.dat");
   
   settings.ReadProperties(person);
-  settings.ReadStaticProperties(Settings);
+  settings.ReadStaticProperties(typeof(Settings));
   var lastUpdate = settings.ReadValue<DateTime>("LastUpdate");
+  var counter = settings.ReadValue<int>(SettingsKey.Counter);
   ```
 
   You can mark properties with **[NonSerializedProperty]** to avoid serializing them while using WriteProperties/WriteStaticProperties.
