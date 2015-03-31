@@ -1,4 +1,5 @@
-# WKFramework
+# WKFramework 
+[![Build Status](https://travis-ci.org/Maxikq/WKFramework.svg)](https://travis-ci.org/Maxikq/WKFramework)
 
 It's a small framework written in C#.  
 Still **working on it**, so for now only settings, navigation and some utils are available.  
