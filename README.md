@@ -1,4 +1,5 @@
-# WKFramework
+# WKFramework  
+[![Build status](https://ci.appveyor.com/api/projects/status/0gybmdy9wkxpw1nk?svg=true)](https://ci.appveyor.com/project/Maxikq/wkframework)
 
 It's a small framework written in C#.  
 Still **working on it**, so for now only settings, navigation and some utils are available.  
