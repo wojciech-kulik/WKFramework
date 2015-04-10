@@ -11,7 +11,8 @@ namespace UnitTests.SettingsTests
     [TestClass]
     public class MsSqlServerSettingsTests : CommonSettingsTests
     {
-        private const string _connectionString = "Server=(localdb)\\v11.0;Integrated Security=true";
+        //private const string _connectionString = "Server=(localdb)\\v11.0;Integrated Security=true";
+        private const string _connectionString = @"Server=(local)\SQL2012SP1;Database=master;User ID=sa;Password=Password12!";
         private const string _dbName = "SettingsDB.Test";
         private const string _tableName = "Settings";
 
