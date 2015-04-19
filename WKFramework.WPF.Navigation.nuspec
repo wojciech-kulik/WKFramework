@@ -9,7 +9,7 @@
         <projectUrl>https://github.com/Maxikq/WKFramework</projectUrl>
         <iconUrl>http://www.wojciechkulik.pl/images/nuget_icon.png</iconUrl>
         <requireLicenseAcceptance>true</requireLicenseAcceptance>
-        <description>Simple library for navigation in MVVM WPF projects.</description>
+        <description>Simple open source library for navigation in MVVM WPF projects.</description>
         <copyright />
         <tags>wkframework framework navigation wpf mvvm wojciech kulik</tags>
     </metadata>

@@ -9,9 +9,9 @@
         <projectUrl>https://github.com/Maxikq/WKFramework</projectUrl>
         <iconUrl>http://www.wojciechkulik.pl/images/nuget_icon.png</iconUrl>
         <requireLicenseAcceptance>true</requireLicenseAcceptance>
-        <description>Simple library to store application settings. Supports files and MS SQL Server.</description>
+        <description>Simple open source library to store application settings. Supports files and MS SQL Server.</description>
         <copyright />
-        <tags>wkframework framework sql file settings utils</tags>
+        <tags>wkframework framework sql mssql file settings utils wojciech kulik</tags>
     </metadata>
     <files>
         <file src="WKFramework.Settings\bin\Release\WKFramework.Settings.dll" target="lib\net40\WKFramework.Settings.dll" />
