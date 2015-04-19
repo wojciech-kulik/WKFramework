@@ -30,7 +30,7 @@ build:
   verbosity: minimal
   
 after_build:
-  - 7z a %PACKAGE_NAME%.zip %APPVEYOR_BUILD_FOLDER%\WKFramework.Settings\bin\$(configuration)\*.dll
+  - 7z a %PACKAGE_NAME%.zip %APPVEYOR_BUILD_FOLDER%\WKFramework.Settings\bin\%CONFIGURATION%\*.dll
   - nuget pack WKFramework.Settings.nuspec -Version %APPVEYOR_BUILD_VERSION%
   - nuget push WKFramework.Settings.%APPVEYOR_BUILD_VERSION%.nupkg -ApiKey %NUGET_KEY%
   - nuget pack WKFramework.WPF.Navigation.nuspec -Version %APPVEYOR_BUILD_VERSION%
