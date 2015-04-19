@@ -5,6 +5,10 @@ os: Visual Studio 2015 CTP 6
 configuration:
 - Release
 
+branches:
+  only:
+    - master
+
 services: mssql2012sp1
 
 environment:
