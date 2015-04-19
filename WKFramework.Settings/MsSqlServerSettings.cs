@@ -563,7 +563,7 @@ namespace WKFramework.Settings
                     var key = GetKeyFromProperty(prop);
                     command.Parameters.AddWithValue(KeyToDelParam + i.ToString(), key);
                     command.Parameters.AddWithValue(KeyParam + i.ToString(), key);
-                    AddValueParam(command, ValueParam + i.ToString(), prop.GetValue(source));
+                    AddValueParam(command, ValueParam + i.ToString(), prop.GetValue(source, null));
                     i++;
                 }
             });
@@ -593,7 +593,7 @@ namespace WKFramework.Settings
                         var prop = properties.FirstOrDefault(x => GetKeyFromProperty(x) == (string)sqlReader[0]);
                         if (prop != null)
                         {
-                            prop.SetValue(destination, ProcessValue<object>(sqlReader[1]));
+                            prop.SetValue(destination, ProcessValue<object>(sqlReader[1]), null);
                         }
                     }
                 });

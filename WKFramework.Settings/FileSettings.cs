@@ -287,7 +287,7 @@ namespace WKFramework.Settings
                 {
                     var key = GetKeyFromProperty(prop);
                     if (_settings.ContainsKey(key))
-                        prop.SetValue(destination, _settings[key]);
+                        prop.SetValue(destination, _settings[key], null);
                 });
         }
 
@@ -309,7 +309,7 @@ namespace WKFramework.Settings
 
         protected bool WritePropertiesOfType(object source, Type type)
         {
-            ForEachProperty(type, x => CanGetProperty(source, x), prop => _settings[GetKeyFromProperty(prop)] = prop.GetValue(source));
+            ForEachProperty(type, x => CanGetProperty(source, x), prop => _settings[GetKeyFromProperty(prop)] = prop.GetValue(source, null));
             TryAutoSave();
             return true;
         }

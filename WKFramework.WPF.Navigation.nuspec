@@ -1,0 +1,19 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
+    <metadata>
+        <id>WKFramework.WPF.Navigation</id>
+        <version>0.0</version>
+        <title>WKFramework.WPF.Navigation</title>
+        <authors>Wojciech Kulik</authors>
+        <licenseUrl>https://raw.githubusercontent.com/Maxikq/WKFramework/master/LICENSE</licenseUrl>
+        <projectUrl>https://github.com/Maxikq/WKFramework</projectUrl>
+        <iconUrl>http://www.wojciechkulik.pl/images/nuget_icon.png</iconUrl>
+        <requireLicenseAcceptance>true</requireLicenseAcceptance>
+        <description>Simple library for navigation in MVVM WPF projects.</description>
+        <copyright />
+        <tags>wkframework framework navigation wpf mvvm wojciech kulik</tags>
+    </metadata>
+    <files>
+        <file src="WKFramework.WPF.Navigation\bin\Release\WKFramework.WPF.Navigation.dll" target="lib\net40\WKFramework.WPF.Navigation.dll" />
+    </files>
+</package>

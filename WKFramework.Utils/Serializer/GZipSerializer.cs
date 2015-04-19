@@ -10,11 +10,8 @@ namespace WKFramework.Utils.Serializer
 {
     public class GZipSerializer : BinarySerializer
     {
-        public CompressionLevel CompressionLevel { get; set; }
-
         public GZipSerializer()
         {
-            CompressionLevel = CompressionLevel.Optimal;
         }
 
         public override byte[] Serialize(object obj)
@@ -25,7 +22,7 @@ namespace WKFramework.Utils.Serializer
             //There is an issue with GZipStream. It has to be closed first to be able to read compressed stream.
             using (var compressedStream = new MemoryStream())
             {
-                using (var gzipStream = new GZipStream(compressedStream, CompressionLevel))
+                using (var gzipStream = new GZipStream(compressedStream, CompressionMode.Compress))
                 {
                     var bytes = base.Serialize(obj);
                     gzipStream.Write(bytes, 0, bytes.Length); 

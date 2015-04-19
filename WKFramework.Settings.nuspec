@@ -1,0 +1,20 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
+    <metadata>
+        <id>WKFramework.Settings</id>
+        <version>0.0</version>
+        <title>WKFramework.Settings</title>
+        <authors>Wojciech Kulik</authors>
+        <licenseUrl>https://raw.githubusercontent.com/Maxikq/WKFramework/master/LICENSE</licenseUrl>
+        <projectUrl>https://github.com/Maxikq/WKFramework</projectUrl>
+        <iconUrl>http://www.wojciechkulik.pl/images/nuget_icon.png</iconUrl>
+        <requireLicenseAcceptance>true</requireLicenseAcceptance>
+        <description>Simple library to store application settings. Supports files and MS SQL Server.</description>
+        <copyright />
+        <tags>wkframework framework sql file settings utils</tags>
+    </metadata>
+    <files>
+        <file src="WKFramework.Settings\bin\Release\WKFramework.Settings.dll" target="lib\net40\WKFramework.Settings.dll" />
+        <file src="WKFramework.Settings\bin\Release\WKFramework.Utils.dll" target="lib\net40\WKFramework.Utils.dll" />
+    </files>
+</package>

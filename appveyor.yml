@@ -1,17 +1,41 @@
 version: 0.5.{build}
+
 os: Visual Studio 2015 CTP 6
+
 configuration:
 - Release
-- Debug
+
 services: mssql2012sp1
+
 environment:
   COVERALLS_REPO_TOKEN:
     secure: AG5MQwNDbg/W7P+ahPZmbNQNKSDDEYhun8Y5PQuNNuAJkAo7wcNThywQ2l4t9cUZ
+  NUGET_KEY:
+    secure: tjVOUVoNjiUb/FYDn9VDptXgJdsgm5gA93OlkyHC1sn3R4s2SEfXLYup5E9+255g
+  PACKAGE_NAME: WKFramework_Settings_%APPVEYOR_BUILD_VERSION%
+	
+cache:
+- packages -> **\packages.config
+
+artifacts:
+  - path: %PACKAGE_NAME%.zip
+    name: %PACKAGE_NAME%
+  - path: '*.nupkg'
+	
 before_build:
   - nuget restore ".\WKFramework.sln"
+  
 build:
   project: WKFramework.sln
   verbosity: minimal
+  
+after_build:
+  - 7z a %PACKAGE_NAME%.zip %APPVEYOR_BUILD_FOLDER%\WKFramework.Settings\bin\$(configuration)\*.dll
+  - nuget pack WKFramework.Settings.nuspec -Version %APPVEYOR_BUILD_VERSION%
+  - nuget push WKFramework.Settings.%APPVEYOR_BUILD_VERSION%.nupkg -ApiKey %NUGET_KEY%
+  - nuget pack WKFramework.WPF.Navigation.nuspec -Version %APPVEYOR_BUILD_VERSION%
+  - nuget push WKFramework.WPF.Navigation.%APPVEYOR_BUILD_VERSION%.nupkg -ApiKey %NUGET_KEY%
+  
 test_script:
-- ps: if ($env:CONFIGURATION -eq "Release") { .\packages\OpenCover.4.5.3723\OpenCover.Console.exe -register:user "-target:C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\IDE\CommonExtensions\Microsoft\TestWindow\vstest.console.exe" "-targetargs:UnitTests\bin\$env:CONFIGURATION\UnitTests.dll" "-filter:+[WKFramework*]*" -output:opencoverCoverage.xml }
-- ps: if ($env:CONFIGURATION -eq "Release") { .\packages\coveralls.net.0.5.0\csmacnz.Coveralls.exe --opencover --useRelativePaths -i opencoverCoverage.xml --repoToken $env:COVERALLS_REPO_TOKEN --commitId $env:APPVEYOR_REPO_COMMIT --commitBranch $env:APPVEYOR_REPO_BRANCH --commitAuthor $env:APPVEYOR_REPO_COMMIT_AUTHOR --commitEmail $env:APPVEYOR_REPO_COMMIT_AUTHOR_EMAIL --commitMessage $env:APPVEYOR_REPO_COMMIT_MESSAGE --jobId $env:APPVEYOR_JOB_ID }
+- ps: .\packages\OpenCover.4.5.3723\OpenCover.Console.exe -register:user "-target:C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\IDE\CommonExtensions\Microsoft\TestWindow\vstest.console.exe" "-targetargs:UnitTests\bin\$env:CONFIGURATION\UnitTests.dll" "-filter:+[WKFramework*]*" -output:opencoverCoverage.xml
+- ps: .\packages\coveralls.net.0.5.0\csmacnz.Coveralls.exe --opencover --useRelativePaths -i opencoverCoverage.xml --repoToken $env:COVERALLS_REPO_TOKEN --commitId $env:APPVEYOR_REPO_COMMIT --commitBranch $env:APPVEYOR_REPO_BRANCH --commitAuthor $env:APPVEYOR_REPO_COMMIT_AUTHOR --commitEmail $env:APPVEYOR_REPO_COMMIT_AUTHOR_EMAIL --commitMessage $env:APPVEYOR_REPO_COMMIT_MESSAGE --jobId $env:APPVEYOR_JOB_ID
