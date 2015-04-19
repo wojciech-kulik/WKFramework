@@ -5,17 +5,11 @@ os: Visual Studio 2015 CTP 6
 configuration:
 - Release
 
-branches:
-  only:
-    - master
-
 services: mssql2012sp1
 
 environment:
   COVERALLS_REPO_TOKEN:
     secure: AG5MQwNDbg/W7P+ahPZmbNQNKSDDEYhun8Y5PQuNNuAJkAo7wcNThywQ2l4t9cUZ
-  NUGET_KEY:
-    secure: tjVOUVoNjiUb/FYDn9VDptXgJdsgm5gA93OlkyHC1sn3R4s2SEfXLYup5E9+255g
   SETTINGS_PACKAGE_NAME: WKFramework_Settings_%APPVEYOR_BUILD_VERSION%
   NAVIGATION_PACKAGE_NAME: WKFramework_Navigation_%APPVEYOR_BUILD_VERSION%
 
@@ -25,7 +19,6 @@ cache:
 artifacts:
   - path: $(SETTINGS_PACKAGE_NAME).zip
   - path: $(NAVIGATION_PACKAGE_NAME).zip
-  - path: '*.nupkg'
 
 before_build:
   - nuget restore ".\WKFramework.sln"
@@ -37,10 +30,6 @@ build:
 after_build:
   - 7z a %SETTINGS_PACKAGE_NAME%.zip %APPVEYOR_BUILD_FOLDER%\WKFramework.Settings\bin\%CONFIGURATION%\*.dll
   - 7z a %NAVIGATION_PACKAGE_NAME%.zip %APPVEYOR_BUILD_FOLDER%\WKFramework.WPF.Navigation\bin\%CONFIGURATION%\*.dll
-  - nuget pack WKFramework.Settings.nuspec -Version %APPVEYOR_BUILD_VERSION%
-  - nuget push WKFramework.Settings.%APPVEYOR_BUILD_VERSION%.nupkg -ApiKey %NUGET_KEY%
-  - nuget pack WKFramework.WPF.Navigation.nuspec -Version %APPVEYOR_BUILD_VERSION%
-  - nuget push WKFramework.WPF.Navigation.%APPVEYOR_BUILD_VERSION%.nupkg -ApiKey %NUGET_KEY%
   
 test_script:
 - ps: .\packages\OpenCover.4.5.3723\OpenCover.Console.exe -register:user "-target:C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\IDE\CommonExtensions\Microsoft\TestWindow\vstest.console.exe" "-targetargs:UnitTests\bin\$env:CONFIGURATION\UnitTests.dll" "-filter:+[WKFramework*]*" -output:opencoverCoverage.xml
