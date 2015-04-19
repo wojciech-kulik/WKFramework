@@ -7,7 +7,6 @@ Still **working on it**, so for now only settings, navigation and some utils are
 Any contributor is welcome.
 
 
-
 ## Settings
 Key-value settings, where any object can be used as a key or value. For now there are two classes available, one to store settings in a file and another to store them in database:
 - FileSettings
