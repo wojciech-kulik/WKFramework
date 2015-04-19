@@ -13,15 +13,15 @@ environment:
   NUGET_KEY:
     secure: tjVOUVoNjiUb/FYDn9VDptXgJdsgm5gA93OlkyHC1sn3R4s2SEfXLYup5E9+255g
   PACKAGE_NAME: WKFramework_Settings_%APPVEYOR_BUILD_VERSION%
-	
+
 cache:
 - packages -> **\packages.config
 
 artifacts:
-  - path: %PACKAGE_NAME%.zip
-    name: %PACKAGE_NAME%
+  - path: $(PACKAGE_NAME).zip
+    name: $(PACKAGE_NAME)
   - path: '*.nupkg'
-	
+
 before_build:
   - nuget restore ".\WKFramework.sln"
   
