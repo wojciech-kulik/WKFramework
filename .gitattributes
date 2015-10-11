@@ -1,3 +1,6 @@
+README.md merge=ours
+appveyor.yml merge=ours
+
 ###############################################################################
 # Set default behavior to automatically normalize line endings.
 ###############################################################################
