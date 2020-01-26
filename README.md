@@ -1,3 +1,5 @@
+[![BuyMeACoffee](https://www.buymeacoffee.com/assets/img/guidelines/download-assets-sm-2.svg)](https://www.buymeacoffee.com/WojciechKulik)
+
 # WKFramework  
 [![Build status](https://ci.appveyor.com/api/projects/status/0gybmdy9wkxpw1nk?svg=true)](https://ci.appveyor.com/project/Maxikq/wkframework) [![Coverage Status](https://coveralls.io/repos/Maxikq/WKFramework/badge.svg?branch=master)](https://coveralls.io/r/Maxikq/WKFramework?branch=master) [![License](https://img.shields.io/badge/license-MIT-blue.svg)]()
 
